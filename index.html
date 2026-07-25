@@ -21,7 +21,8 @@
     #game-container {
       position: relative;
       display: inline-block;
-      max-width: 100%;
+      width: 100%;
+      max-width: 500px;
     }
     canvas {
       background-color: #2b2b3d;
@@ -29,7 +30,7 @@
       border-radius: 6px;
       display: block;
       margin: 0 auto;
-      max-width: 100%;
+      width: 100%;
       height: auto;
     }
     .hud {
@@ -40,7 +41,7 @@
       font-size: 0.8rem;
     }
     .bar-bg {
-      width: 120px;
+      width: 110px;
       height: 14px;
       background: #444;
       border: 1px solid #fff;
@@ -97,8 +98,7 @@
         <div class="bar-bg"><div id="hp-p2" class="bar-fill"></div></div>
       </div>
     </div>
-    <!-- Ancho expandido a 550 para que quepan ambos perfectamente -->
-    <canvas id="canvas" width="550" height="230"></canvas>
+    <canvas id="canvas" width="500" height="230"></canvas>
   </div>
 
   <div class="controls">
@@ -118,28 +118,30 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-// Cargar Imagen del Parrillero
+// Cargar Imágenes
 const imgP1 = new Image();
 imgP1.src = 'parrillero.png';
 
-// Jugador 1 (Parrillero)
+const imgP2 = new Image();
+imgP2.src = 'robot.png';
+
+// Jugadores (Grandes, a ~1 cm del recuadro)
 const p1 = {
   x: 20,
-  y: 65,
-  w: 110,
-  h: 135,
+  y: 35,
+  w: 120,
+  h: 160,
   hp: 100,
   isAttacking: false,
   isDefending: false,
   fireball: null
 };
 
-// Jugador 2 (Robot Automático)
 const p2 = {
-  x: 420,
-  y: 65,
-  w: 110,
-  h: 135,
+  x: 360,
+  y: 35,
+  w: 120,
+  h: 160,
   hp: 100,
   isAttacking: false,
   isDefending: false
@@ -151,7 +153,7 @@ function createSparks(x, y) {
   for (let i = 0; i < 12; i++) {
     sparks.push({
       x: x,
-      y: y + (Math.random() * 50 - 25),
+      y: y + (Math.random() * 60 - 30),
       vx: (Math.random() - 0.5) * 8,
       vy: (Math.random() - 0.5) * 6,
       size: Math.random() * 5 + 3,
@@ -161,16 +163,15 @@ function createSparks(x, y) {
   }
 }
 
-// Bucle Principal de Dibujo
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Suelo
+  // Línea de Suelo
   ctx.strokeStyle = '#eab308';
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(0, 200);
-  ctx.lineTo(canvas.width, 200);
+  ctx.moveTo(0, 198);
+  ctx.lineTo(canvas.width, 198);
   ctx.stroke();
 
   // --- DIBUJAR PARRILLERO ---
@@ -181,29 +182,30 @@ function draw() {
     ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
   }
 
-  // --- DIBUJAR ROBOT ---
-  ctx.fillStyle = '#64748b';
-  ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
-  // Ojos Rojos Robot
-  ctx.fillStyle = '#ef4444';
-  ctx.fillRect(p2.x + 20, p2.y + 25, 20, 12);
-  ctx.fillRect(p2.x + 65, p2.y + 25, 20, 12);
+  // --- DIBUJAR ROBOT FUTURISTA (IMAGEN ROBOT.PNG) ---
+  if (imgP2.complete && imgP2.naturalWidth !== 0) {
+    ctx.drawImage(imgP2, p2.x, p2.y, p2.w, p2.h);
+  } else {
+    // Cuadro limpio azul oscuro de respaldo si aún no carga la imagen
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
+  }
 
-  // --- AROS DE DEFENSA (AMARILLO) ---
+  // --- AROS DE LUZ AMARILLOS (DEFENSA) ---
   [p1, p2].forEach(p => {
     if (p.isDefending) {
-      ctx.shadowBlur = 15;
+      ctx.shadowBlur = 18;
       ctx.shadowColor = '#ffe600';
       ctx.strokeStyle = '#ffee00';
       ctx.lineWidth = 5;
       ctx.beginPath();
-      ctx.ellipse(p.x + p.w / 2, p.y + p.h / 2, p.w / 1.3, p.h / 1.3, 0, 0, Math.PI * 2);
+      ctx.ellipse(p.x + p.w / 2, p.y + p.h / 2, p.w / 1.4, p.h / 1.4, 0, 0, Math.PI * 2);
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
   });
 
-  // --- DIBUJAR CHISPAS / FUEGO ---
+  // --- CHISPAS Y FUEGO DE ATAQUE ---
   for (let i = sparks.length - 1; i >= 0; i--) {
     let s = sparks[i];
     ctx.fillStyle = s.color;
@@ -216,9 +218,9 @@ function draw() {
     if (s.life <= 0) sparks.splice(i, 1);
   }
 
-  // --- BOLA DE FUEGO ESPECIAL ---
+  // --- BOLA DE FUEGO (ESPECIAL) ---
   if (p1.fireball) {
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 12;
     ctx.shadowColor = '#ff4500';
     ctx.fillStyle = '#ff3300';
     ctx.beginPath();
@@ -228,7 +230,6 @@ function draw() {
 
     p1.fireball.x += 10;
 
-    // Colisión con Robot
     if (p1.fireball.x >= p2.x && p1.fireball.x <= p2.x + p2.w) {
       if (!p2.isDefending) {
         p2.hp = Math.max(0, p2.hp - 15);
@@ -244,46 +245,42 @@ function draw() {
   requestAnimationFrame(draw);
 }
 
-// --- INTELIGENCIA ARTIFICIAL (ROBOT EN AUTOMÁTICO) ---
+// --- IA COMBATE AUTOMÁTICO DEL ROBOT ---
 setInterval(() => {
   if (p2.hp <= 0 || p1.hp <= 0) return;
 
   const dist = p2.x - (p1.x + p1.w);
   const decision = Math.random();
 
-  // Acercarse al jugador si está lejos
-  if (dist > 40) {
-    p2.x -= 15;
-  } else if (dist < 10) {
+  if (dist > 25) {
+    p2.x -= 10;
+  } else if (dist < 5) {
     p2.x += 10;
   }
 
-  // Acciones aleatorias de combate
-  if (dist < 60 && decision > 0.5) {
-    // Robot Ataca
+  if (dist < 50 && decision > 0.4) {
     p2.isAttacking = true;
     createSparks(p2.x, p2.y + p2.h / 2);
-    if (!p1.isDefending && dist < 40) {
+    if (!p1.isDefending && dist < 30) {
       p1.hp = Math.max(0, p1.hp - 8);
       updateHUD();
     }
     setTimeout(() => { p2.isAttacking = false; }, 250);
-  } else if (decision < 0.25) {
-    // Robot Se Defiende
+  } else if (decision < 0.35) {
     p2.isDefending = true;
     setTimeout(() => { p2.isDefending = false; }, 800);
   }
-}, 400);
+}, 450);
 
-// Controles Jugador 1
+// Controles Jugador
 function moveP1(dir) {
-  p1.x = Math.max(0, Math.min(p2.x - p1.w, p1.x + dir));
+  p1.x = Math.max(0, Math.min(p2.x - p1.w + 10, p1.x + dir));
 }
 
 function jumpP1() {
-  if (p1.y === 65) {
-    p1.y = 20;
-    setTimeout(() => { p1.y = 65; }, 350);
+  if (p1.y === 35) {
+    p1.y = -5;
+    setTimeout(() => { p1.y = 35; }, 350);
   }
 }
 
@@ -293,7 +290,7 @@ function attackP1() {
   createSparks(p1.x + p1.w, p1.y + p1.h / 2);
 
   const dist = p2.x - (p1.x + p1.w);
-  if (dist <= 35 && !p2.isDefending) {
+  if (dist <= 30 && !p2.isDefending) {
     p2.hp = Math.max(0, p2.hp - 10);
     updateHUD();
   }
