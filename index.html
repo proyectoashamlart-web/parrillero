@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Div Brawlers: Parrillero vs Robot</title>
+  <title>Div Brawlers: Parrillero vs Robot Cyberpunk</title>
   <style>
     body {
-      background-color: #1a1a24;
+      background-color: #0d0e15;
       color: white;
       font-family: monospace, sans-serif;
       text-align: center;
@@ -14,9 +14,10 @@
       padding: 10px;
     }
     h1 {
-      color: #ff9900;
+      color: #00f0ff;
       font-size: 1.1rem;
       margin: 5px 0;
+      text-shadow: 0 0 8px #00f0ff;
     }
     #game-container {
       position: relative;
@@ -25,12 +26,13 @@
       max-width: 500px;
     }
     canvas {
-      border: 3px solid #ffffff;
+      border: 3px solid #ff007f;
       border-radius: 6px;
       display: block;
       margin: 0 auto;
       width: 100%;
       height: auto;
+      box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
     }
     .hud {
       display: flex;
@@ -42,16 +44,17 @@
     .bar-bg {
       width: 110px;
       height: 14px;
-      background: #444;
-      border: 1px solid #fff;
+      background: #222;
+      border: 1px solid #00f0ff;
     }
     .bar-fill {
       height: 100%;
       transition: width 0.2s;
     }
     #hp-p1 { background: #00ff66; width: 100%; }
-    #hp-p2 { background: #ff3333; width: 100%; }
-    
+    #hp-p2 { background: #ff0055; width: 100%; }
+    #round-txt { color: #ffe600; text-shadow: 0 0 5px #ffe600; }
+
     .controls {
       margin-top: 10px;
       display: flex;
@@ -74,8 +77,8 @@
       font-size: 0.9rem;
       touch-action: manipulation;
     }
-    .btn-move { background: #334155; width: 60px; }
-    .btn-jump { background: #475569; width: 100px; }
+    .btn-move { background: #1e293b; width: 60px; border: 1px solid #38bdf8; }
+    .btn-jump { background: #334155; width: 100px; border: 1px solid #38bdf8; }
     .btn-def  { background: #eab308; color: #000; }
     .btn-atk  { background: #dc2626; }
     .btn-spc  { background: #9333ea; }
@@ -91,7 +94,7 @@
         <span>EL PARRILLERO</span>
         <div class="bar-bg"><div id="hp-p1" class="bar-fill"></div></div>
       </div>
-      <div>RONDA 1</div>
+      <div id="round-txt">RONDA 1 / 3</div>
       <div>
         <span>ROBOT FUTURISTA</span>
         <div class="bar-bg"><div id="hp-p2" class="bar-fill"></div></div>
@@ -123,6 +126,13 @@ imgP1.src = 'parrillero.png';
 
 const imgP2 = new Image();
 imgP2.src = 'robot.png';
+
+// Sistema de Rondas
+let currentRound = 1;
+let p1Wins = 0;
+let p2Wins = 0;
+let roundOver = false;
+let announcementMsg = "";
 
 // Jugadores
 const p1 = {
@@ -156,73 +166,75 @@ function createSparks(x, y) {
       vx: (Math.random() - 0.5) * 8,
       vy: (Math.random() - 0.5) * 6,
       size: Math.random() * 5 + 3,
-      color: Math.random() > 0.5 ? '#ff4500' : '#ffcc00',
+      color: Math.random() > 0.5 ? '#ff007f' : '#00f0ff',
       life: 12
     });
   }
 }
 
-// Dibuja el escenario de Restaurante Rural
-function drawRuralRestaurantBackground() {
-  // Cielo al atardecer rural
-  let skyGradient = ctx.createLinearGradient(0, 0, 0, 200);
-  skyGradient.addColorStop(0, '#1e1b4b');
-  skyGradient.addColorStop(1, '#7c2d12');
-  ctx.fillStyle = skyGradient;
+// Escenario Cyberpunk Nocturno
+function drawCyberpunkBackground() {
+  // Cielo Oscuro Degradado Synthwave
+  let bgGrad = ctx.createLinearGradient(0, 0, 0, 200);
+  bgGrad.addColorStop(0, '#090a10');
+  bgGrad.addColorStop(0.7, '#2a0845');
+  bgGrad.addColorStop(1, '#64004b');
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Montañas del paisaje rural
-  ctx.fillStyle = '#064e3b';
+  // Sol/Luna Neón Synthwave
+  ctx.fillStyle = '#ff007f';
   ctx.beginPath();
-  ctx.moveTo(0, 160);
-  ctx.lineTo(120, 90);
-  ctx.lineTo(250, 160);
-  ctx.lineTo(380, 100);
-  ctx.lineTo(500, 160);
-  ctx.lineTo(500, 200);
-  ctx.lineTo(0, 200);
+  ctx.arc(250, 90, 35, 0, Math.PI * 2);
   ctx.fill();
 
-  // Estructura de Madera del Restaurant Rural (Fondo)
-  ctx.fillStyle = '#451a03';
-  ctx.fillRect(40, 60, 420, 138); // Pared principal
-  
-  // Ventanas iluminadas con ambiente cálido
-  ctx.fillStyle = '#fef08a';
-  ctx.fillRect(70, 85, 60, 50);
-  ctx.fillRect(370, 85, 60, 50);
-  
-  // Detalle Ventanas (Marcos)
-  ctx.strokeStyle = '#292524';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(70, 85, 60, 50);
-  ctx.strokeRect(370, 85, 60, 50);
+  // Edificios Cyberpunk de Fondo
+  ctx.fillStyle = '#111322';
+  ctx.fillRect(10, 60, 50, 140);
+  ctx.fillRect(70, 40, 65, 160);
+  ctx.fillRect(150, 80, 55, 120);
+  ctx.fillRect(290, 50, 70, 150);
+  ctx.fillRect(370, 70, 60, 130);
+  ctx.fillRect(440, 30, 50, 170);
 
-  // Cartel del Restaurant Rural
-  ctx.fillStyle = '#78350f';
-  ctx.fillRect(180, 70, 140, 30);
-  ctx.strokeStyle = '#f59e0b';
-  ctx.strokeRect(180, 70, 140, 30);
-  ctx.fillStyle = '#fef08a';
-  ctx.font = 'bold 11px sans-serif';
-  ctx.fillText('RESTAURANT RURAL', 188, 89);
+  // Ventanas / Luces Neón en Edificios
+  ctx.fillStyle = '#00f0ff';
+  ctx.fillRect(80, 50, 12, 60);
+  ctx.fillRect(300, 70, 15, 40);
+  ctx.fillRect(450, 50, 10, 80);
 
-  // Suelo de tablas de madera/tierra
-  ctx.fillStyle = '#78350f';
+  ctx.fillStyle = '#ff007f';
+  ctx.fillRect(20, 80, 8, 40);
+  ctx.fillRect(160, 100, 10, 30);
+  ctx.fillRect(380, 90, 12, 50);
+
+  // Suelo Neón con Rejilla Cyberpunk
+  ctx.fillStyle = '#0f111d';
   ctx.fillRect(0, 195, canvas.width, 35);
-  ctx.strokeStyle = '#451a03';
+
+  ctx.strokeStyle = '#ff007f';
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(0, 195);
   ctx.lineTo(canvas.width, 195);
   ctx.stroke();
+
+  // Líneas de Rejilla del Suelo
+  ctx.strokeStyle = '#00f0ff';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < canvas.width; x += 30) {
+    ctx.beginPath();
+    ctx.moveTo(x, 195);
+    ctx.lineTo(x - 15, 230);
+    ctx.stroke();
+  }
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Fondo Restaurante Rural
-  drawRuralRestaurantBackground();
+  // Escenario Cyberpunk
+  drawCyberpunkBackground();
 
   // --- DIBUJAR PARRILLERO ---
   if (imgP1.complete && imgP1.naturalWidth !== 0) {
@@ -279,16 +291,17 @@ function draw() {
 
     p1.fireball.x += 10;
 
-    // IA del Robot: reacciona defensivamente ante la bola de fuego
+    // IA Reacción a Bola de Fuego (Defiende y avanza a atacar)
     if (p1.fireball.x > p2.x - 120 && p1.fireball.x < p2.x) {
       p2.isDefending = true;
-      setTimeout(() => { p2.isDefending = false; }, 600);
+      setTimeout(() => { p2.isDefending = false; robotCounterAttack(); }, 400);
     }
 
     if (p1.fireball.x >= p2.x && p1.fireball.x <= p2.x + p2.w) {
       if (!p2.isDefending) {
         p2.hp = Math.max(0, p2.hp - 15);
         updateHUD();
+        checkRoundEnd();
       }
       createSparks(p2.x, p2.y + p2.h / 2);
       p1.fireball = null;
@@ -297,52 +310,101 @@ function draw() {
     }
   }
 
+  // Anuncios de Fin de Ronda o Juego
+  if (roundOver) {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = 'bold 20px monospace';
+    ctx.fillText(announcementMsg, 70, 115);
+  }
+
   requestAnimationFrame(draw);
 }
 
-// --- INTELIGENCIA ARTIFICIAL DEL ROBOT (COMBATE Y DEFENSA AUTOMÁTICA) ---
+// --- INTELIGENCIA ARTIFICIAL DEL ROBOT ---
+function robotCounterAttack() {
+  if (roundOver) return;
+  p2.isAttacking = true;
+  createSparks(p2.x, p2.y + p2.h / 2);
+
+  const dist = p2.x - (p1.x + p1.w);
+  if (!p1.isDefending && dist < 45) {
+    p1.hp = Math.max(0, p1.hp - 10);
+    updateHUD();
+    checkRoundEnd();
+  }
+  setTimeout(() => { p2.isAttacking = false; }, 200);
+}
+
 setInterval(() => {
-  if (p2.hp <= 0 || p1.hp <= 0) return;
+  if (roundOver || p2.hp <= 0 || p1.hp <= 0) return;
 
   const dist = p2.x - (p1.x + p1.w);
   const decision = Math.random();
 
-  // 1. Persecución Inteligente
-  if (dist > 35) {
-    p2.x -= 12; // Avanza rápido hacia el parrillero
+  // Movimiento constante hacia el rival
+  if (dist > 30) {
+    p2.x -= 12;
   } else if (dist < 5) {
-    p2.x += 10; // Mantiene distancia corta
+    p2.x += 8;
   }
 
-  // 2. Reacción defensiva si el Parrillero ataca de cerca
-  if (p1.isAttacking && dist < 45) {
+  // Ataque Autónomo constante
+  if (dist <= 45 && decision > 0.35) {
+    robotCounterAttack();
+  } else if (decision < 0.3) {
     p2.isDefending = true;
     setTimeout(() => { p2.isDefending = false; }, 500);
-    return;
   }
+}, 380);
 
-  // 3. Ataques automáticos
-  if (dist <= 45 && decision > 0.3) {
-    p2.isAttacking = true;
-    createSparks(p2.x, p2.y + p2.h / 2);
-    if (!p1.isDefending) {
-      p1.hp = Math.max(0, p1.hp - 8);
-      updateHUD();
+// --- CONTROL DE RONDAS (3 RONDAS) ---
+function checkRoundEnd() {
+  if (roundOver) return;
+
+  if (p1.hp <= 0 || p2.hp <= 0) {
+    roundOver = true;
+
+    if (p1.hp > 0) {
+      p1Wins++;
+      announcementMsg = `¡PARRILLERO GANA LA RONDA ${currentRound}!`;
+    } else {
+      p2Wins++;
+      announcementMsg = `¡ROBOT GANA LA RONDA ${currentRound}!`;
     }
-    setTimeout(() => { p2.isAttacking = false; }, 200);
-  } else if (decision < 0.25) {
-    // 4. Defensa aleatoria
-    p2.isDefending = true;
-    setTimeout(() => { p2.isDefending = false; }, 600);
+
+    setTimeout(() => {
+      if (currentRound < 3) {
+        currentRound++;
+        resetRound();
+      } else {
+        const winner = p1Wins > p2Wins ? '¡PARRILLERO ES EL CAMPEÓN!' : '¡ROBOT ES EL CAMPEÓN!';
+        announcementMsg = winner;
+      }
+    }, 2200);
   }
-}, 300); // Frecuencia alta para respuestas rápidas
+}
+
+function resetRound() {
+  p1.hp = 100;
+  p2.hp = 100;
+  p1.x = 20;
+  p2.x = 360;
+  p1.fireball = null;
+  roundOver = false;
+  document.getElementById('round-txt').innerText = `RONDA ${currentRound} / 3`;
+  updateHUD();
+}
 
 // Controles Jugador
 function moveP1(dir) {
+  if (roundOver) return;
   p1.x = Math.max(0, Math.min(p2.x - p1.w + 10, p1.x + dir));
 }
 
 function jumpP1() {
+  if (roundOver) return;
   if (p1.y === 35) {
     p1.y = -5;
     setTimeout(() => { p1.y = 35; }, 350);
@@ -350,25 +412,33 @@ function jumpP1() {
 }
 
 function attackP1() {
+  if (roundOver) return;
   p1.isAttacking = true;
   p1.isDefending = false;
   createSparks(p1.x + p1.w, p1.y + p1.h / 2);
 
   const dist = p2.x - (p1.x + p1.w);
-  if (dist <= 35 && !p2.isDefending) {
-    p2.hp = Math.max(0, p2.hp - 10);
-    updateHUD();
+  if (dist <= 35) {
+    if (!p2.isDefending) {
+      p2.hp = Math.max(0, p2.hp - 10);
+      updateHUD();
+      checkRoundEnd();
+    }
+    // El robot responde/contraataca si es atacado de cerca
+    setTimeout(robotCounterAttack, 150);
   }
 
   setTimeout(() => { p1.isAttacking = false; }, 250);
 }
 
 function defendP1() {
+  if (roundOver) return;
   p1.isDefending = true;
   setTimeout(() => { p1.isDefending = false; }, 1000);
 }
 
 function specialP1() {
+  if (roundOver) return;
   if (!p1.fireball) {
     p1.fireball = { x: p1.x + p1.w, y: p1.y + p1.h / 2 };
   }
