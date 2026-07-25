@@ -37,6 +37,7 @@
     .hud {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       padding: 5px 10px;
       font-weight: bold;
       font-size: 0.8rem;
@@ -46,6 +47,7 @@
       height: 14px;
       background: #222;
       border: 1px solid #00f0ff;
+      margin-top: 2px;
     }
     .bar-fill {
       height: 100%;
@@ -53,7 +55,8 @@
     }
     #hp-p1 { background: #00ff66; width: 100%; }
     #hp-p2 { background: #ff0055; width: 100%; }
-    #round-txt { color: #ffe600; text-shadow: 0 0 5px #ffe600; }
+    #round-txt { color: #ffe600; text-shadow: 0 0 5px #ffe600; font-size: 0.9rem; }
+    .score-txt { color: #00f0ff; font-size: 0.75rem; margin-top: 3px; }
 
     #btn-retry {
       display: none;
@@ -113,13 +116,15 @@
   <div id="game-container">
     <div class="hud">
       <div>
-        <span>EL PARRILLERO</span>
+        <span>PARRILLERO</span>
         <div class="bar-bg"><div id="hp-p1" class="bar-fill"></div></div>
+        <div id="score-p1" class="score-txt">PTS: 0</div>
       </div>
       <div id="round-txt">RONDA 1 / 3</div>
       <div>
         <span>ROBOT FUTURISTA</span>
         <div class="bar-bg"><div id="hp-p2" class="bar-fill"></div></div>
+        <div id="score-p2" class="score-txt">PTS: 0</div>
       </div>
     </div>
     <canvas id="canvas" width="500" height="230"></canvas>
@@ -143,17 +148,19 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-// Personajes por código si no hay imágenes
 const imgP1 = new Image(); imgP1.src = 'parrillero.png';
 const imgP2 = new Image(); imgP2.src = 'robot.png';
 
-// Sistema de Rondas y Estado
+// Sistema de Rondas, Puntos y Estado
 let currentRound = 1;
 let p1Wins = 0;
 let p2Wins = 0;
+let p1Score = 0;
+let p2Score = 0;
 let roundOver = false;
 let gameOver = false;
 let announcementMsg = "";
+let announcementSubMsg = "";
 let bgParticles = [];
 
 // Jugadores
@@ -175,31 +182,27 @@ function createSparks(x, y) {
   }
 }
 
-// GENERACIÓN DE FONDO PROCEDURAL CYBERPUNK POR RONDA
+// DIBUJAR FONDO PROCEDURAL CYBERPUNK POR RONDA
 function drawCyberBackground() {
-  // Base del cielo
   let skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
   if (currentRound === 1) {
-    skyGrad.addColorStop(0, '#030712');
-    skyGrad.addColorStop(1, '#1e1b4b');
+    skyGrad.addColorStop(0, '#030712'); skyGrad.addColorStop(1, '#1e1b4b');
   } else if (currentRound === 2) {
-    skyGrad.addColorStop(0, '#111827');
-    skyGrad.addColorStop(1, '#450a0a');
+    skyGrad.addColorStop(0, '#111827'); skyGrad.addColorStop(1, '#450a0a');
   } else {
-    skyGrad.addColorStop(0, '#0f172a');
-    skyGrad.addColorStop(1, '#3b0764');
+    skyGrad.addColorStop(0, '#0f172a'); skyGrad.addColorStop(1, '#3b0764');
   }
   ctx.fillStyle = skyGrad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Edificios Futuristas Neón de Fondo
+  // Edificios Futuristas
   ctx.fillStyle = '#090d16';
   for (let i = 0; i < canvas.width; i += 40) {
     let h = 80 + Math.sin(i + currentRound) * 40;
     ctx.fillRect(i, canvas.height - 35 - h, 35, h);
   }
 
-  // Grilla de Suelo Cyberpunk
+  // Grilla Neón del Suelo
   ctx.strokeStyle = currentRound === 2 ? '#ff4500' : '#00f0ff';
   ctx.lineWidth = 1;
   for (let x = 0; x <= canvas.width; x += 25) {
@@ -209,7 +212,7 @@ function drawCyberBackground() {
     ctx.stroke();
   }
 
-  // Línea de Horizonte Brillante
+  // Línea de Horizonte
   ctx.shadowBlur = 10;
   ctx.shadowColor = currentRound === 2 ? '#ff0055' : '#00f0ff';
   ctx.strokeStyle = ctx.shadowColor;
@@ -220,33 +223,25 @@ function drawCyberBackground() {
   ctx.stroke();
   ctx.shadowBlur = 0;
 
-  // DETALLES TEMÁTICOS POR RONDA
+  // DETALLES POR RONDA
   if (currentRound === 1) {
-    // RONDA 1: Fila de clientes esperando
     ctx.fillStyle = '#00f0ff';
     ctx.font = 'bold 12px monospace';
-    ctx.fillText("🍢 CYBER BARBACOA - ESPERA: 15 MIN", 20, 30);
-
-    // Siluetas de clientes en fila
+    ctx.fillText("🍢 CYBER BARBACOA - ESPERA: 15 MIN", 20, 25);
     ctx.fillStyle = '#051329';
     for (let i = 0; i < 4; i++) {
       let cx = 30 + (i * 22);
-      ctx.fillRect(cx, 150, 12, 45); // cuerpo
-      ctx.beginPath(); ctx.arc(cx + 6, 144, 6, 0, Math.PI * 2); ctx.fill(); // cabeza
+      ctx.fillRect(cx, 150, 12, 45);
+      ctx.beginPath(); ctx.arc(cx + 6, 144, 6, 0, Math.PI * 2); ctx.fill();
     }
   } else if (currentRound === 2) {
-    // RONDA 2: Parrillas y Cocina con humo
     ctx.fillStyle = '#ff4500';
     ctx.font = 'bold 12px monospace';
-    ctx.fillText("🔥 PARRILLAS EN ACCIÓN - COCINANDO", 20, 30);
-
-    // Puesto de parrilla de fondo
+    ctx.fillText("🔥 PARRILLAS EN ACCIÓN - COCINANDO", 20, 25);
     ctx.fillStyle = '#1f2937';
     ctx.fillRect(180, 130, 140, 65);
     ctx.fillStyle = '#ff5500';
-    ctx.fillRect(190, 145, 120, 6); // brasas
-
-    // Humo / Vapour
+    ctx.fillRect(190, 145, 120, 6);
     if (Math.random() > 0.3) {
       bgParticles.push({
         x: 200 + Math.random() * 100, y: 140,
@@ -255,22 +250,17 @@ function drawCyberBackground() {
       });
     }
   } else {
-    // RONDA 3: Restaurante lleno y comida servida
     ctx.fillStyle = '#ffe600';
     ctx.font = 'bold 12px monospace';
-    ctx.fillText("🥩 BANQUETE SERVIDO - BUEN PROVECHO", 20, 30);
-
-    // Mesas y Platos
+    ctx.fillText("🥩 BANQUETE SERVIDO - BUEN PROVECHO", 20, 25);
     for (let i = 0; i < 3; i++) {
       let mx = 60 + (i * 150);
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(mx, 165, 50, 30); // mesa
-      ctx.fillStyle = '#ff0055';
-      ctx.fillRect(mx + 15, 160, 20, 5); // plato con carne
+      ctx.fillStyle = '#334155'; ctx.fillRect(mx, 165, 50, 30);
+      ctx.fillStyle = '#ff0055'; ctx.fillRect(mx + 15, 160, 20, 5);
     }
   }
 
-  // Dibujar y mover partículas de humo
+  // Partículas de humo
   for (let i = bgParticles.length - 1; i >= 0; i--) {
     let p = bgParticles[i];
     ctx.fillStyle = `rgba(200, 200, 200, ${p.alpha})`;
@@ -289,29 +279,24 @@ function draw() {
 
   drawCyberBackground();
 
-  // DIBUJAR PARRILLERO
+  // DIBUJAR JUGADORES
   if (imgP1.complete && imgP1.naturalWidth !== 0) {
     ctx.drawImage(imgP1, p1.x, p1.y, p1.w, p1.h);
   } else {
-    ctx.fillStyle = '#0284c7';
-    ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
+    ctx.fillStyle = '#0284c7'; ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
   }
 
-  // DIBUJAR ROBOT
   if (imgP2.complete && imgP2.naturalWidth !== 0) {
     ctx.drawImage(imgP2, p2.x, p2.y, p2.w, p2.h);
   } else {
-    ctx.fillStyle = '#475569';
-    ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
+    ctx.fillStyle = '#475569'; ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
   }
 
-  // AROS DE LUZ
+  // ESCUDO DE DEFENSA
   [p1, p2].forEach(p => {
     if (p.isDefending) {
-      ctx.shadowBlur = 18;
-      ctx.shadowColor = '#ffe600';
-      ctx.strokeStyle = '#ffee00';
-      ctx.lineWidth = 5;
+      ctx.shadowBlur = 18; ctx.shadowColor = '#ffe600';
+      ctx.strokeStyle = '#ffee00'; ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.ellipse(p.x + p.w / 2, p.y + p.h / 2, p.w / 1.4, p.h / 1.4, 0, 0, Math.PI * 2);
       ctx.stroke();
@@ -323,23 +308,16 @@ function draw() {
   for (let i = sparks.length - 1; i >= 0; i--) {
     let s = sparks[i];
     ctx.fillStyle = s.color;
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-    ctx.fill();
-    s.x += s.vx;
-    s.y += s.vy;
-    s.life--;
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
+    s.x += s.vx; s.y += s.vy; s.life--;
     if (s.life <= 0) sparks.splice(i, 1);
   }
 
   // BOLA DE FUEGO
   if (p1.fireball && !roundOver) {
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = '#ff4500';
+    ctx.shadowBlur = 12; ctx.shadowColor = '#ff4500';
     ctx.fillStyle = '#ff3300';
-    ctx.beginPath();
-    ctx.arc(p1.fireball.x, p1.fireball.y, 14, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(p1.fireball.x, p1.fireball.y, 14, 0, Math.PI * 2); ctx.fill();
     ctx.shadowBlur = 0;
 
     p1.fireball.x += 10;
@@ -362,21 +340,26 @@ function draw() {
     }
   }
 
-  // Cartel de Anuncio
+  // Cartel de Fin de Ronda o Juego
   if (roundOver) {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
     ctx.fillStyle = '#00f0ff';
-    ctx.font = 'bold 18px monospace';
+    ctx.font = 'bold 16px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(announcementMsg, canvas.width / 2, gameOver ? 85 : canvas.height / 2);
+    ctx.fillText(announcementMsg, canvas.width / 2, gameOver ? 75 : 100);
+    
+    ctx.fillStyle = '#ffe600';
+    ctx.font = 'bold 13px monospace';
+    ctx.fillText(announcementSubMsg, canvas.width / 2, gameOver ? 105 : 125);
     ctx.textAlign = 'start';
   }
 
   requestAnimationFrame(draw);
 }
 
-// INTELIGENCIA DEL ROBOT
+// IA DEL ROBOT
 function robotCounterAttack() {
   if (roundOver || p2.hp <= 0) return;
   p2.isAttacking = true;
@@ -411,6 +394,7 @@ setInterval(() => {
   }
 }, 380);
 
+// REVISIÓN DE FIN DE RONDA Y CÁLCULO DE PUNTOS
 function checkRoundEnd() {
   if (roundOver) return;
 
@@ -419,11 +403,19 @@ function checkRoundEnd() {
 
     if (p1.hp > 0) {
       p1Wins++;
+      const roundPoints = p1.hp; // Puntos basados en vida restante
+      p1Score += roundPoints;
       announcementMsg = `¡PARRILLERO GANA LA RONDA ${currentRound}!`;
+      announcementSubMsg = `+${roundPoints} PTS OBTENIDOS EN ESTA RONDA`;
     } else {
       p2Wins++;
+      const roundPoints = p2.hp;
+      p2Score += roundPoints;
       announcementMsg = `¡ROBOT GANA LA RONDA ${currentRound}!`;
+      announcementSubMsg = `+${roundPoints} PTS OBTENIDOS EN ESTA RONDA`;
     }
+
+    updateHUD();
 
     setTimeout(() => {
       if (currentRound < 3) {
@@ -431,11 +423,20 @@ function checkRoundEnd() {
         resetRound();
       } else {
         gameOver = true;
-        const winner = p1Wins > p2Wins ? '¡PARRILLERO ES EL CAMPEÓN!' : '¡ROBOT ES EL CAMPEÓN!';
-        announcementMsg = winner;
+        let winnerText = "";
+        if (p1Score > p2Score) {
+          winnerText = `🏆 ¡PARRILLERO ES EL CAMPEÓN! (${p1Score} PTS)`;
+        } else if (p2Score > p1Score) {
+          winnerText = `🤖 ¡ROBOT ES EL CAMPEÓN! (${p2Score} PTS)`;
+        } else {
+          winnerText = `🤝 ¡EMPATE FINAL! (${p1Score} PTS EN TOTAES)`;
+        }
+        
+        announcementMsg = winnerText;
+        announcementSubMsg = `PUNTAJE FINAL: PARRILLERO ${p1Score} PTS vs ROBOT ${p2Score} PTS`;
         document.getElementById('btn-retry').style.display = 'block';
       }
-    }, 800);
+    }, 1500);
   }
 }
 
@@ -450,11 +451,12 @@ function resetRound() {
   updateHUD();
 }
 
-// REINICIAR TODO EL JUEGO COMPLETO
 function restartFullGame() {
   currentRound = 1;
   p1Wins = 0;
   p2Wins = 0;
+  p1Score = 0;
+  p2Score = 0;
   gameOver = false;
   bgParticles = [];
   sparks = [];
@@ -511,6 +513,8 @@ function specialP1() {
 function updateHUD() {
   document.getElementById('hp-p1').style.width = p1.hp + '%';
   document.getElementById('hp-p2').style.width = p2.hp + '%';
+  document.getElementById('score-p1').innerText = `PTS: ${p1Score}`;
+  document.getElementById('score-p2').innerText = `PTS: ${p2Score}`;
 }
 
 draw();
