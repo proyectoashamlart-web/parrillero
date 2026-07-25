@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Div Brawlers: Parrillero vs Robot Cyberpunk</title>
+  <title>Div Brawlers: Parrillero vs Robot</title>
   <style>
     body {
       background-color: #0d0e15;
@@ -49,11 +49,33 @@
     }
     .bar-fill {
       height: 100%;
-      transition: width 0.2s;
+      transition: width 0.15s;
     }
     #hp-p1 { background: #00ff66; width: 100%; }
     #hp-p2 { background: #ff0055; width: 100%; }
     #round-txt { color: #ffe600; text-shadow: 0 0 5px #ffe600; }
+
+    #btn-retry {
+      display: none;
+      position: absolute;
+      top: 65%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(135deg, #ff007f, #7928ca);
+      border: 2px solid #00f0ff;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 0 15px #ff007f;
+      z-index: 10;
+      touch-action: manipulation;
+    }
+    #btn-retry:active {
+      transform: translate(-50%, -50%) scale(0.95);
+    }
 
     .controls {
       margin-top: 10px;
@@ -101,6 +123,7 @@
       </div>
     </div>
     <canvas id="canvas" width="500" height="230"></canvas>
+    <button id="btn-retry" onclick="restartFullGame()">REINTENTAR 🔄</button>
   </div>
 
   <div class="controls">
@@ -120,42 +143,22 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-// Cargar Imágenes
-const imgP1 = new Image();
-imgP1.src = 'parrillero.png';
+// Personajes por código si no hay imágenes
+const imgP1 = new Image(); imgP1.src = 'parrillero.png';
+const imgP2 = new Image(); imgP2.src = 'robot.png';
 
-const imgP2 = new Image();
-imgP2.src = 'robot.png';
-
-// Sistema de Rondas
+// Sistema de Rondas y Estado
 let currentRound = 1;
 let p1Wins = 0;
 let p2Wins = 0;
 let roundOver = false;
+let gameOver = false;
 let announcementMsg = "";
+let bgParticles = [];
 
 // Jugadores
-const p1 = {
-  x: 20,
-  y: 35,
-  w: 120,
-  h: 160,
-  hp: 100,
-  isAttacking: false,
-  isDefending: false,
-  fireball: null
-};
-
-const p2 = {
-  x: 360,
-  y: 35,
-  w: 120,
-  h: 160,
-  hp: 100,
-  isAttacking: false,
-  isDefending: false
-};
-
+const p1 = { x: 20, y: 35, w: 120, h: 160, hp: 100, isAttacking: false, isDefending: false, fireball: null };
+const p2 = { x: 360, y: 35, w: 120, h: 160, hp: 100, isAttacking: false, isDefending: false };
 let sparks = [];
 
 function createSparks(x, y) {
@@ -172,71 +175,121 @@ function createSparks(x, y) {
   }
 }
 
-// Escenario Cyberpunk Nocturno
-function drawCyberpunkBackground() {
-  // Cielo Oscuro Degradado Synthwave
-  let bgGrad = ctx.createLinearGradient(0, 0, 0, 200);
-  bgGrad.addColorStop(0, '#090a10');
-  bgGrad.addColorStop(0.7, '#2a0845');
-  bgGrad.addColorStop(1, '#64004b');
-  ctx.fillStyle = bgGrad;
+// GENERACIÓN DE FONDO PROCEDURAL CYBERPUNK POR RONDA
+function drawCyberBackground() {
+  // Base del cielo
+  let skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  if (currentRound === 1) {
+    skyGrad.addColorStop(0, '#030712');
+    skyGrad.addColorStop(1, '#1e1b4b');
+  } else if (currentRound === 2) {
+    skyGrad.addColorStop(0, '#111827');
+    skyGrad.addColorStop(1, '#450a0a');
+  } else {
+    skyGrad.addColorStop(0, '#0f172a');
+    skyGrad.addColorStop(1, '#3b0764');
+  }
+  ctx.fillStyle = skyGrad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Sol/Luna Neón Synthwave
-  ctx.fillStyle = '#ff007f';
-  ctx.beginPath();
-  ctx.arc(250, 90, 35, 0, Math.PI * 2);
-  ctx.fill();
+  // Edificios Futuristas Neón de Fondo
+  ctx.fillStyle = '#090d16';
+  for (let i = 0; i < canvas.width; i += 40) {
+    let h = 80 + Math.sin(i + currentRound) * 40;
+    ctx.fillRect(i, canvas.height - 35 - h, 35, h);
+  }
 
-  // Edificios Cyberpunk de Fondo
-  ctx.fillStyle = '#111322';
-  ctx.fillRect(10, 60, 50, 140);
-  ctx.fillRect(70, 40, 65, 160);
-  ctx.fillRect(150, 80, 55, 120);
-  ctx.fillRect(290, 50, 70, 150);
-  ctx.fillRect(370, 70, 60, 130);
-  ctx.fillRect(440, 30, 50, 170);
+  // Grilla de Suelo Cyberpunk
+  ctx.strokeStyle = currentRound === 2 ? '#ff4500' : '#00f0ff';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= canvas.width; x += 25) {
+    ctx.beginPath();
+    ctx.moveTo(x, 195);
+    ctx.lineTo(x + (x - canvas.width / 2) * 0.5, canvas.height);
+    ctx.stroke();
+  }
 
-  // Ventanas / Luces Neón en Edificios
-  ctx.fillStyle = '#00f0ff';
-  ctx.fillRect(80, 50, 12, 60);
-  ctx.fillRect(300, 70, 15, 40);
-  ctx.fillRect(450, 50, 10, 80);
-
-  ctx.fillStyle = '#ff007f';
-  ctx.fillRect(20, 80, 8, 40);
-  ctx.fillRect(160, 100, 10, 30);
-  ctx.fillRect(380, 90, 12, 50);
-
-  // Suelo Neón con Rejilla Cyberpunk
-  ctx.fillStyle = '#0f111d';
-  ctx.fillRect(0, 195, canvas.width, 35);
-
-  ctx.strokeStyle = '#ff007f';
+  // Línea de Horizonte Brillante
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = currentRound === 2 ? '#ff0055' : '#00f0ff';
+  ctx.strokeStyle = ctx.shadowColor;
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(0, 195);
   ctx.lineTo(canvas.width, 195);
   ctx.stroke();
+  ctx.shadowBlur = 0;
 
-  // Líneas de Rejilla del Suelo
-  ctx.strokeStyle = '#00f0ff';
-  ctx.lineWidth = 1;
-  for (let x = 0; x < canvas.width; x += 30) {
+  // DETALLES TEMÁTICOS POR RONDA
+  if (currentRound === 1) {
+    // RONDA 1: Fila de clientes esperando
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText("🍢 CYBER BARBACOA - ESPERA: 15 MIN", 20, 30);
+
+    // Siluetas de clientes en fila
+    ctx.fillStyle = '#051329';
+    for (let i = 0; i < 4; i++) {
+      let cx = 30 + (i * 22);
+      ctx.fillRect(cx, 150, 12, 45); // cuerpo
+      ctx.beginPath(); ctx.arc(cx + 6, 144, 6, 0, Math.PI * 2); ctx.fill(); // cabeza
+    }
+  } else if (currentRound === 2) {
+    // RONDA 2: Parrillas y Cocina con humo
+    ctx.fillStyle = '#ff4500';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText("🔥 PARRILLAS EN ACCIÓN - COCINANDO", 20, 30);
+
+    // Puesto de parrilla de fondo
+    ctx.fillStyle = '#1f2937';
+    ctx.fillRect(180, 130, 140, 65);
+    ctx.fillStyle = '#ff5500';
+    ctx.fillRect(190, 145, 120, 6); // brasas
+
+    // Humo / Vapour
+    if (Math.random() > 0.3) {
+      bgParticles.push({
+        x: 200 + Math.random() * 100, y: 140,
+        vx: (Math.random() - 0.5) * 1, vy: -Math.random() * 2 - 1,
+        size: Math.random() * 8 + 4, alpha: 0.6
+      });
+    }
+  } else {
+    // RONDA 3: Restaurante lleno y comida servida
+    ctx.fillStyle = '#ffe600';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText("🥩 BANQUETE SERVIDO - BUEN PROVECHO", 20, 30);
+
+    // Mesas y Platos
+    for (let i = 0; i < 3; i++) {
+      let mx = 60 + (i * 150);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(mx, 165, 50, 30); // mesa
+      ctx.fillStyle = '#ff0055';
+      ctx.fillRect(mx + 15, 160, 20, 5); // plato con carne
+    }
+  }
+
+  // Dibujar y mover partículas de humo
+  for (let i = bgParticles.length - 1; i >= 0; i--) {
+    let p = bgParticles[i];
+    ctx.fillStyle = `rgba(200, 200, 200, ${p.alpha})`;
     ctx.beginPath();
-    ctx.moveTo(x, 195);
-    ctx.lineTo(x - 15, 230);
-    ctx.stroke();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    p.x += p.vx;
+    p.y += p.vy;
+    p.alpha -= 0.015;
+    if (p.alpha <= 0) bgParticles.splice(i, 1);
   }
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Escenario Cyberpunk
-  drawCyberpunkBackground();
+  drawCyberBackground();
 
-  // --- DIBUJAR PARRILLERO ---
+  // DIBUJAR PARRILLERO
   if (imgP1.complete && imgP1.naturalWidth !== 0) {
     ctx.drawImage(imgP1, p1.x, p1.y, p1.w, p1.h);
   } else {
@@ -244,7 +297,7 @@ function draw() {
     ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
   }
 
-  // --- DIBUJAR ROBOT FUTURISTA ---
+  // DIBUJAR ROBOT
   if (imgP2.complete && imgP2.naturalWidth !== 0) {
     ctx.drawImage(imgP2, p2.x, p2.y, p2.w, p2.h);
   } else {
@@ -252,7 +305,7 @@ function draw() {
     ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
   }
 
-  // --- AROS DE LUZ AMARILLOS (DEFENSA) ---
+  // AROS DE LUZ
   [p1, p2].forEach(p => {
     if (p.isDefending) {
       ctx.shadowBlur = 18;
@@ -266,7 +319,7 @@ function draw() {
     }
   });
 
-  // --- CHISPAS Y FUEGO ---
+  // CHISPAS
   for (let i = sparks.length - 1; i >= 0; i--) {
     let s = sparks[i];
     ctx.fillStyle = s.color;
@@ -279,8 +332,8 @@ function draw() {
     if (s.life <= 0) sparks.splice(i, 1);
   }
 
-  // --- BOLA DE FUEGO ---
-  if (p1.fireball) {
+  // BOLA DE FUEGO
+  if (p1.fireball && !roundOver) {
     ctx.shadowBlur = 12;
     ctx.shadowColor = '#ff4500';
     ctx.fillStyle = '#ff3300';
@@ -291,15 +344,14 @@ function draw() {
 
     p1.fireball.x += 10;
 
-    // IA Reacción a Bola de Fuego (Defiende y avanza a atacar)
     if (p1.fireball.x > p2.x - 120 && p1.fireball.x < p2.x) {
       p2.isDefending = true;
-      setTimeout(() => { p2.isDefending = false; robotCounterAttack(); }, 400);
+      setTimeout(() => { p2.isDefending = false; }, 300);
     }
 
     if (p1.fireball.x >= p2.x && p1.fireball.x <= p2.x + p2.w) {
       if (!p2.isDefending) {
-        p2.hp = Math.max(0, p2.hp - 15);
+        p2.hp = Math.max(0, p2.hp - 20);
         updateHUD();
         checkRoundEnd();
       }
@@ -310,21 +362,23 @@ function draw() {
     }
   }
 
-  // Anuncios de Fin de Ronda o Juego
+  // Cartel de Anuncio
   if (roundOver) {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#00f0ff';
-    ctx.font = 'bold 20px monospace';
-    ctx.fillText(announcementMsg, 70, 115);
+    ctx.font = 'bold 18px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(announcementMsg, canvas.width / 2, gameOver ? 85 : canvas.height / 2);
+    ctx.textAlign = 'start';
   }
 
   requestAnimationFrame(draw);
 }
 
-// --- INTELIGENCIA ARTIFICIAL DEL ROBOT ---
+// INTELIGENCIA DEL ROBOT
 function robotCounterAttack() {
-  if (roundOver) return;
+  if (roundOver || p2.hp <= 0) return;
   p2.isAttacking = true;
   createSparks(p2.x, p2.y + p2.h / 2);
 
@@ -343,23 +397,20 @@ setInterval(() => {
   const dist = p2.x - (p1.x + p1.w);
   const decision = Math.random();
 
-  // Movimiento constante hacia el rival
   if (dist > 30) {
     p2.x -= 12;
   } else if (dist < 5) {
     p2.x += 8;
   }
 
-  // Ataque Autónomo constante
   if (dist <= 45 && decision > 0.35) {
     robotCounterAttack();
   } else if (decision < 0.3) {
     p2.isDefending = true;
-    setTimeout(() => { p2.isDefending = false; }, 500);
+    setTimeout(() => { p2.isDefending = false; }, 400);
   }
 }, 380);
 
-// --- CONTROL DE RONDAS (3 RONDAS) ---
 function checkRoundEnd() {
   if (roundOver) return;
 
@@ -379,10 +430,12 @@ function checkRoundEnd() {
         currentRound++;
         resetRound();
       } else {
+        gameOver = true;
         const winner = p1Wins > p2Wins ? '¡PARRILLERO ES EL CAMPEÓN!' : '¡ROBOT ES EL CAMPEÓN!';
         announcementMsg = winner;
+        document.getElementById('btn-retry').style.display = 'block';
       }
-    }, 2200);
+    }, 800);
   }
 }
 
@@ -397,7 +450,19 @@ function resetRound() {
   updateHUD();
 }
 
-// Controles Jugador
+// REINICIAR TODO EL JUEGO COMPLETO
+function restartFullGame() {
+  currentRound = 1;
+  p1Wins = 0;
+  p2Wins = 0;
+  gameOver = false;
+  bgParticles = [];
+  sparks = [];
+  document.getElementById('btn-retry').style.display = 'none';
+  resetRound();
+}
+
+// CONTROLES JUGADOR
 function moveP1(dir) {
   if (roundOver) return;
   p1.x = Math.max(0, Math.min(p2.x - p1.w + 10, p1.x + dir));
@@ -420,12 +485,11 @@ function attackP1() {
   const dist = p2.x - (p1.x + p1.w);
   if (dist <= 35) {
     if (!p2.isDefending) {
-      p2.hp = Math.max(0, p2.hp - 10);
+      p2.hp = Math.max(0, p2.hp - 15);
       updateHUD();
       checkRoundEnd();
     }
-    // El robot responde/contraataca si es atacado de cerca
-    setTimeout(robotCounterAttack, 150);
+    setTimeout(robotCounterAttack, 120);
   }
 
   setTimeout(() => { p1.isAttacking = false; }, 250);
@@ -434,7 +498,7 @@ function attackP1() {
 function defendP1() {
   if (roundOver) return;
   p1.isDefending = true;
-  setTimeout(() => { p1.isDefending = false; }, 1000);
+  setTimeout(() => { p1.isDefending = false; }, 800);
 }
 
 function specialP1() {
