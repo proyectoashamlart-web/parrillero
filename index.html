@@ -1,524 +1,256 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Div Brawlers: Parrillero vs Robot</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #0c0d14;
-            color: #fff;
-            font-family: 'Courier New', Courier, monospace;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        h1 {
-            margin: 8px 0;
-            font-size: 22px;
-            color: #f1c40f;
-            text-shadow: 2px 2px #e74c3c;
-            text-align: center;
-        }
-        #game-wrapper {
-            position: relative;
-            width: 800px;
-            max-width: 98vw;
-            border: 4px solid #fff;
-            box-shadow: 0 0 25px rgba(231, 76, 60, 0.5);
-            background: #111;
-        }
-        #hud {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
-        }
-        .player-hud { width: 38%; }
-        .player-name {
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .health-bg {
-            width: 100%;
-            height: 18px;
-            background-color: #222;
-            border: 2px solid #fff;
-            box-shadow: inset 0 0 5px #000;
-        }
-        .health-fill {
-            height: 100%;
-            width: 100%;
-            transition: width 0.1s ease;
-        }
-        #p1-health { background-color: #2ecc71; }
-        #p2-health { background-color: #e74c3c; }
-        #round-info {
-            text-align: center;
-            font-size: 13px;
-            color: #f1c40f;
-            font-weight: bold;
-        }
-        .score { font-size: 18px; color: #fff; margin-top: 2px; }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: auto;
-            background: #1e1e2f;
-        }
-
-        /* Modal Overlay */
-        #start-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.88);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 20;
-            gap: 15px;
-            text-align: center;
-            padding: 20px;
-        }
-        #start-screen h2 {
-            color: #f1c40f;
-            margin: 0;
-            font-size: 26px;
-            text-shadow: 2px 2px #000;
-        }
-        #start-screen p {
-            color: #ddd;
-            margin: 0;
-            font-size: 13px;
-            max-width: 80%;
-        }
-        #start-btn {
-            background: #e74c3c;
-            color: white;
-            border: 3px solid #f1c40f;
-            padding: 12px 28px;
-            font-size: 18px;
-            font-weight: bold;
-            font-family: inherit;
-            cursor: pointer;
-            border-radius: 6px;
-            box-shadow: 0 4px #c0392b;
-        }
-        #start-btn:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px #c0392b;
-        }
-
-        /* Controles Móviles */
-        #controls {
-            display: flex;
-            justify-content: space-between;
-            width: 800px;
-            max-width: 98vw;
-            margin-top: 8px;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .control-group { display: flex; gap: 4px; }
-        .btn {
-            background: #2c3e50;
-            color: #fff;
-            border: 2px solid #ecf0f1;
-            padding: 10px 14px;
-            font-size: 13px;
-            font-family: inherit;
-            border-radius: 6px;
-            touch-action: manipulation;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .btn:active { background: #415b76; }
-        .btn-defend { background: #3498db; border-color: #2980b9; }
-        .btn-attack { background: #e74c3c; border-color: #c0392b; }
-        .btn-special { background: #9b59b6; border-color: #8e44ad; }
-
-        .instructions {
-            margin-top: 6px;
-            font-size: 11px;
-            color: #aaa;
-            text-align: center;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Div Brawlers: Parrillero vs Robot</title>
+  <style>
+    body {
+      background-color: #1a1a24;
+      color: white;
+      font-family: monospace, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 10px;
+    }
+    h1 {
+      color: #ff9900;
+      font-size: 1.2rem;
+      margin: 5px 0;
+    }
+    #game-container {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+    }
+    canvas {
+      background-color: #2b2b3d;
+      border: 3px solid #ffffff;
+      border-radius: 4px;
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      height: auto;
+    }
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 10px;
+      font-weight: bold;
+      font-size: 0.8rem;
+    }
+    .bar-bg {
+      width: 120px;
+      height: 14px;
+      background: #444;
+      border: 1px solid #fff;
+    }
+    .bar-fill {
+      height: 100%;
+      transition: width 0.2s;
+    }
+    #hp-p1 { background: #00ff66; width: 100%; }
+    #hp-p2 { background: #ff3333; width: 100%; }
+    
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      width: 100%;
+    }
+    button {
+      padding: 12px 18px;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 0.9rem;
+      touch-action: manipulation;
+    }
+    .btn-move { background: #334155; width: 60px; }
+    .btn-jump { background: #475569; width: 100px; }
+    .btn-def  { background: #0284c7; }
+    .btn-atk  { background: #dc2626; }
+    .btn-spc  { background: #9333ea; }
+  </style>
 </head>
 <body>
 
-    <h1>DIV BRAWLERS: PARRILLERO VS ROBOT 🍖🤖</h1>
+  <h1>DIV BRAWLERS: PARRILLERO VS ROBOT 🍖🤖</h1>
 
-    <div id="game-wrapper">
-        <div id="hud">
-            <div class="player-hud">
-                <div class="player-name" style="color: #3498db;">EL PARRILLERO</div>
-                <div class="health-bg"><div id="p1-health" class="health-fill"></div></div>
-            </div>
-            <div id="round-info">
-                <div>RONDA <span id="round-num">1</span></div>
-                <div class="score"><span id="p1-score">0</span> - <span id="p2-score">0</span></div>
-            </div>
-            <div class="player-hud" style="text-align: right;">
-                <div class="player-name" style="color: #e74c3c;">ROBOT FUTURISTA</div>
-                <div class="health-bg"><div id="p2-health" class="health-fill"></div></div>
-            </div>
-        </div>
-
-        <!-- Pantalla de Inicio / Fin -->
-        <div id="start-screen">
-            <h2 id="start-title">¡BATALLA POR LA PARRILLA!</h2>
-            <p id="start-desc">Pelea al mejor de 3 rondas. Cubriéndote reduces el daño un 80%.</p>
-            <button id="start-btn" onclick="startGame()">¡COMENZAR PELEA!</button>
-        </div>
-
-        <canvas id="gameCanvas" width="800" height="400"></canvas>
+  <div id="game-container">
+    <div class="hud">
+      <div>
+        <span>EL PARRILLERO</span>
+        <div class="bar-bg"><div id="hp-p1" class="bar-fill"></div></div>
+      </div>
+      <div>RONDA 1</div>
+      <div>
+        <span>ROBOT FUTURISTA</span>
+        <div class="bar-bg"><div id="hp-p2" class="bar-fill"></div></div>
+      </div>
     </div>
+    <canvas id="canvas" width="400" height="200"></canvas>
+  </div>
 
-    <div id="controls">
-        <div class="control-group">
-            <button class="btn" id="btn-left">◀</button>
-            <button class="btn" id="btn-right">▶</button>
-            <button class="btn" id="btn-jump">▲ SALTAR</button>
-        </div>
-        <div class="control-group">
-            <button class="btn btn-defend" id="btn-defend">🛡️ DEFENDER</button>
-            <button class="btn btn-attack" id="btn-attack">⚔️ ATACAR</button>
-            <button class="btn btn-special" id="btn-special">🔥 ESPECIAL</button>
-        </div>
+  <div class="controls">
+    <div class="row">
+      <button class="btn-move" onclick="moveP1(-10)">◀</button>
+      <button class="btn-move" onclick="moveP1(10)">▶</button>
+      <button class="btn-jump" onclick="jumpP1()">▲ SALTAR</button>
     </div>
-
-    <div class="instructions">
-        <b>PC:</b> A/D (Mover) | W (Saltar) | S (Defender) | Espacio (Atacar) | E (Especial)
+    <div class="row">
+      <button class="btn-def" onclick="defendP1()">🛡️ DEFENDER</button>
+      <button class="btn-atk" onclick="attackP1()">⚔️ ATACAR</button>
+      <button class="btn-spc" onclick="specialP1()">🔥 ESPECIAL</button>
     </div>
+  </div>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
+const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-const gravity = 0.6;
-const floorY = 340;
+// Cargar Imágenes
+const imgP1 = new Image();
+imgP1.src = 'parrillero.png'; // Asegúrate de que el nombre coincida exactamente
 
-let gameStarted = false;
-let currentRound = 1;
-let p1Wins = 0;
-let p2Wins = 0;
-let roundOver = false;
-let winnerName = null;
-
-// Cargar Imágenes de los Personajes desde tu repositorio
-const imgParrillero = new Image();
-imgParrillero.src = 'parrillero.png';
-
-const imgRobot = new Image();
-imgRobot.src = 'robot.png';
-
-// Objeto Jugador 1 (El Parrillero)
-const player1 = {
-    x: 120, y: 200, width: 70, height: 110, velocityX: 0, velocityY: 0,
-    speed: 5, jumpForce: -13, isGrounded: false, health: 100,
-    isAttacking: false, isDefending: false, attackType: 'normal',
-    attackBox: { width: 70, height: 40 }, facing: 'right'
+// Estado del jugador 1 (Parrillero)
+const p1 = {
+  x: 40,
+  y: 90,
+  w: 65,  // Tamaño aumentado
+  h: 85,  // Tamaño aumentado
+  hp: 100,
+  isAttacking: false,
+  isDefending: false,
+  fireball: null
 };
 
-// Objeto Jugador 2 (El Robot)
-const player2 = {
-    x: 610, y: 200, width: 70, height: 110, velocityX: 0, velocityY: 0,
-    speed: 3, jumpForce: -13, isGrounded: false, health: 100,
-    isAttacking: false, isDefending: false, attackType: 'normal',
-    attackBox: { width: 70, height: 40 }, facing: 'left'
+// Estado del Bot (Robot)
+const p2 = {
+  x: 290,
+  y: 90,
+  w: 65,  // Tamaño aumentado
+  h: 85,  // Tamaño aumentado
+  hp: 100
 };
-
-const keys = { a: false, d: false, w: false, s: false, space: false, e: false };
-
-// Eventos Teclado
-window.addEventListener('keydown', (evt) => {
-    if (!gameStarted) return;
-    if (evt.key === 'a' || evt.key === 'A') keys.a = true;
-    if (evt.key === 'd' || evt.key === 'D') keys.d = true;
-    if (evt.key === 'w' || evt.key === 'W') keys.w = true;
-    if (evt.key === 's' || evt.key === 'S' || evt.key === 'ArrowDown') player1.isDefending = true;
-    if (evt.code === 'Space') {
-        if (!keys.space) doAttack(player1, 'normal');
-        keys.space = true;
-    }
-    if (evt.key === 'e' || evt.key === 'E') {
-        if (!keys.e) doAttack(player1, 'special');
-        keys.e = true;
-    }
-});
-
-window.addEventListener('keyup', (evt) => {
-    if (evt.key === 'a' || evt.key === 'A') keys.a = false;
-    if (evt.key === 'd' || evt.key === 'D') keys.d = false;
-    if (evt.key === 'w' || evt.key === 'W') keys.w = false;
-    if (evt.key === 's' || evt.key === 'S' || evt.key === 'ArrowDown') player1.isDefending = false;
-    if (evt.code === 'Space') keys.space = false;
-    if (evt.key === 'e' || evt.key === 'E') keys.e = false;
-});
-
-// Eventos Táctiles
-function setupTouch(id, onStart, onEnd) {
-    const el = document.getElementById(id);
-    el.addEventListener('touchstart', (e) => { e.preventDefault(); onStart(); });
-    el.addEventListener('touchend', (e) => { e.preventDefault(); onEnd(); });
-    el.addEventListener('mousedown', onStart);
-    el.addEventListener('mouseup', onEnd);
-}
-
-setupTouch('btn-left', () => keys.a = true, () => keys.a = false);
-setupTouch('btn-right', () => keys.d = true, () => keys.d = false);
-setupTouch('btn-defend', () => player1.isDefending = true, () => player1.isDefending = false);
-
-document.getElementById('btn-jump').addEventListener('click', () => {
-    if (player1.isGrounded && gameStarted) { player1.velocityY = player1.jumpForce; player1.isGrounded = false; }
-});
-document.getElementById('btn-attack').addEventListener('click', () => doAttack(player1, 'normal'));
-document.getElementById('btn-special').addEventListener('click', () => doAttack(player1, 'special'));
-
-function startGame() {
-    document.getElementById('start-screen').style.display = 'none';
-    gameStarted = true;
-    if (p1Wins === 2 || p2Wins === 2) {
-        p1Wins = 0; p2Wins = 0; currentRound = 1;
-        document.getElementById('round-num').innerText = 1;
-    }
-    resetRound();
-}
-
-function resetRound() {
-    player1.x = 120; player1.y = 200; player1.health = 100; player1.isDefending = false; player1.facing = 'right';
-    player2.x = 610; player2.y = 200; player2.health = 100; player2.isDefending = false; player2.facing = 'left';
-    roundOver = false;
-    winnerName = null;
-    updateHUD();
-}
-
-function doAttack(char, type) {
-    if (!gameStarted || roundOver || char.isAttacking || char.health <= 0) return;
-
-    char.isAttacking = true;
-    char.attackType = type;
-    let damage = type === 'special' ? 22 : 12;
-
-    setTimeout(() => { char.isAttacking = false; }, 250);
-
-    const target = (char === player1) ? player2 : player1;
-    const attackX = (char.facing === 'right') ? char.x + char.width : char.x - char.attackBox.width;
-
-    if (
-        attackX < target.x + target.width &&
-        attackX + char.attackBox.width > target.x &&
-        char.y < target.y + target.height &&
-        char.y + char.attackBox.height > target.y
-    ) {
-        if (target.isDefending) damage = Math.floor(damage * 0.2); // Escudo reduce 80% daño
-        
-        target.health = Math.max(0, target.health - damage);
-        updateHUD();
-
-        if (target.health <= 0 && !roundOver) {
-            checkRoundWinner();
-        }
-    }
-}
-
-function checkRoundWinner() {
-    roundOver = true;
-    if (player1.health > 0) p1Wins++;
-    else p2Wins++;
-
-    updateHUD();
-
-    setTimeout(() => {
-        if (p1Wins === 2 || p2Wins === 2) {
-            winnerName = p1Wins === 2 ? 'EL PARRILLERO' : 'ROBOT FUTURISTA';
-            document.getElementById('start-title').innerText = `¡${winnerName} GANA EL JUEGO!`;
-            document.getElementById('start-desc').innerText = `Marcador final: ${p1Wins} - ${p2Wins}`;
-            document.getElementById('start-btn').innerText = 'JUGAR DE NUEVO';
-            document.getElementById('start-screen').style.display = 'flex';
-        } else {
-            currentRound++;
-            document.getElementById('round-num').innerText = currentRound;
-            resetRound();
-        }
-    }, 2000);
-}
-
-function updateHUD() {
-    document.getElementById('p1-health').style.width = player1.health + '%';
-    document.getElementById('p2-health').style.width = player2.health + '%';
-    document.getElementById('p1-score').innerText = p1Wins;
-    document.getElementById('p2-score').innerText = p2Wins;
-}
-
-function update() {
-    if (!gameStarted || roundOver) return;
-
-    // Movimiento P1
-    if (keys.a) { player1.velocityX = -player1.speed; player1.facing = 'left'; }
-    else if (keys.d) { player1.velocityX = player1.speed; player1.facing = 'right'; }
-    else { player1.velocityX = 0; }
-
-    if (keys.w && player1.isGrounded) { player1.velocityY = player1.jumpForce; player1.isGrounded = false; }
-
-    player1.velocityY += gravity;
-    player1.x += player1.velocityX;
-    player1.y += player1.velocityY;
-
-    if (player1.y + player1.height >= floorY) {
-        player1.y = floorY - player1.height;
-        player1.velocityY = 0;
-        player1.isGrounded = true;
-    }
-    player1.x = Math.max(0, Math.min(canvas.width - player1.width, player1.x));
-
-    // IA P2 (Robot)
-    const dist = player1.x - player2.x;
-    if (Math.abs(dist) > 60) {
-        player2.velocityX = dist > 0 ? player2.speed : -player2.speed;
-        player2.facing = dist > 0 ? 'right' : 'left';
-        player2.isDefending = false;
-    } else {
-        player2.velocityX = 0;
-        if (Math.random() < 0.03) doAttack(player2, Math.random() < 0.3 ? 'special' : 'normal');
-        else if (Math.random() < 0.02) player2.isDefending = true;
-        else if (Math.random() < 0.02) player2.isDefending = false;
-    }
-
-    player2.velocityY += gravity;
-    player2.x += player2.velocityX;
-    player2.y += player2.velocityY;
-
-    if (player2.y + player2.height >= floorY) {
-        player2.y = floorY - player2.height;
-        player2.velocityY = 0;
-        player2.isGrounded = true;
-    }
-    player2.x = Math.max(0, Math.min(canvas.width - player2.width, player2.x));
-}
 
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Fondo y Escenario
-    ctx.fillStyle = '#181828'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#33334e'; ctx.fillRect(0, floorY, canvas.width, canvas.height - floorY);
-    ctx.fillStyle = '#f1c40f'; ctx.fillRect(0, floorY, canvas.width, 4);
+  // Línea de Suelo
+  ctx.strokeStyle = '#eab308';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, 175);
+  ctx.lineTo(canvas.width, 175);
+  ctx.stroke();
 
-    // Mesa con la Parrilla central
-    ctx.fillStyle = '#7f8c8d'; ctx.fillRect(375, floorY - 30, 50, 30);
-    drawGrillPlate(380, floorY - 42);
+  // --- DIBUJAR PARRILLERO ---
+  if (imgP1.complete && imgP1.naturalWidth !== 0) {
+    ctx.drawImage(imgP1, p1.x, p1.y, p1.w, p1.h);
+  } else {
+    // Si no carga la imagen, dibuja un cuadro azul de respaldo
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
+  }
 
-    // Dibujar Personajes
-    drawParrillero(player1);
-    drawRobot(player2);
+  // Efecto de Defensa (Escudo Azul)
+  if (p1.isDefending) {
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(p1.x + p1.w / 2, p1.y + p1.h / 2, 45, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Efecto de Ataque (Espada / Corte)
+  if (p1.isAttacking) {
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(p1.x + p1.w + 10, p1.y + 30, 25, -Math.PI / 4, Math.PI / 4);
+    ctx.stroke();
+  }
+
+  // Bola de fuego (Especial)
+  if (p1.fireball) {
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath();
+    ctx.arc(p1.fireball.x, p1.fireball.y, 12, 0, Math.PI * 2);
+    ctx.fill();
+    p1.fireball.x += 8;
+
+    // Colisión Bola de Fuego con Robot
+    if (p1.fireball.x >= p2.x) {
+      p2.hp = Math.max(0, p2.hp - 15);
+      updateHP();
+      p1.fireball = null;
+    } else if (p1.fireball.x > canvas.width) {
+      p1.fireball = null;
+    }
+  }
+
+  // --- DIBUJAR ROBOT ---
+  // Cuerpo del robot (más grande)
+  ctx.fillStyle = '#64748b';
+  ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
+  // Ojos Rojos
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(p2.x + 10, p2.y + 15, 12, 8);
+  ctx.fillRect(p2.x + 35, p2.y + 15, 12, 8);
+
+  requestAnimationFrame(draw);
 }
 
-function drawGrillPlate(x, y) {
-    ctx.fillStyle = '#bdc3c7'; ctx.fillRect(x, y + 6, 40, 6);
-    ctx.fillStyle = '#d35400'; ctx.fillRect(x + 5, y, 15, 6);
-    ctx.fillStyle = '#27ae60'; ctx.fillRect(x + 22, y + 2, 12, 4);
+// Acciones
+function moveP1(dir) {
+  p1.x = Math.max(0, Math.min(canvas.width - p1.w, p1.x + dir));
 }
 
-function drawParrillero(p) {
-    if (p.health <= 0 && roundOver) return;
-    ctx.save();
-    ctx.translate(p.x, p.y);
-
-    if (p.facing === 'left') {
-        ctx.scale(-1, 1);
-        ctx.translate(-p.width, 0);
-    }
-
-    if (p.isDefending) {
-        ctx.strokeStyle = '#3498db'; ctx.lineWidth = 4;
-        ctx.strokeRect(-5, -5, p.width + 10, p.height + 10);
-    }
-
-    if (imgParrillero.complete && imgParrillero.naturalWidth !== 0) {
-        ctx.drawImage(imgParrillero, 0, 0, p.width, p.height);
-    } else {
-        ctx.fillStyle = '#5ac8fa'; ctx.fillRect(10, 35, 50, 45);
-        ctx.fillStyle = '#2c3e50'; ctx.fillRect(15, 80, 18, 30); ctx.fillRect(37, 80, 18, 30);
-        ctx.fillStyle = '#f3a683'; ctx.fillRect(18, 5, 34, 30);
-        ctx.fillStyle = '#2d3436'; ctx.fillRect(15, 0, 40, 12);
-    }
-
-    if (p.isAttacking) {
-        if (p.attackType === 'special') {
-            ctx.fillStyle = '#f39c12'; ctx.fillRect(p.width, 30, 40, 40);
-        } else {
-            ctx.fillStyle = '#ecf0f1'; ctx.fillRect(p.width, 45, 30, 10);
-        }
-    }
-
-    ctx.restore();
+function jumpP1() {
+  if (p1.y === 90) {
+    p1.y = 40;
+    setTimeout(() => { p1.y = 90; }, 400);
+  }
 }
 
-function drawRobot(p) {
-    if (p.health <= 0 && roundOver) return;
-    ctx.save();
-    ctx.translate(p.x, p.y);
+function attackP1() {
+  p1.isAttacking = true;
+  p1.isDefending = false;
+  
+  // Golpe al robot si está cerca
+  if (p1.x + p1.w + 20 >= p2.x) {
+    p2.hp = Math.max(0, p2.hp - 10);
+    updateHP();
+  }
 
-    if (p.facing === 'left') {
-        ctx.scale(-1, 1);
-        ctx.translate(-p.width, 0);
-    }
-
-    if (p.isDefending) {
-        ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 4;
-        ctx.strokeRect(-5, -5, p.width + 10, p.height + 10);
-    }
-
-    if (imgRobot.complete && imgRobot.naturalWidth !== 0) {
-        ctx.drawImage(imgRobot, 0, 0, p.width, p.height);
-    } else {
-        ctx.fillStyle = '#e74c3c'; ctx.fillRect(10, 10, 50, 90);
-        ctx.fillStyle = '#f1c40f'; ctx.fillRect(20, 20, 12, 12); ctx.fillRect(38, 20, 12, 12);
-        ctx.fillStyle = '#333'; ctx.fillRect(15, 50, 40, 10);
-    }
-
-    if (p.isAttacking) {
-        if (p.attackType === 'special') {
-            ctx.fillStyle = '#e74c3c'; ctx.fillRect(p.width, 25, 45, 45);
-        } else {
-            ctx.fillStyle = '#f1c40f'; ctx.fillRect(p.width, 45, 35, 12);
-        }
-    }
-
-    ctx.restore();
+  setTimeout(() => { p1.isAttacking = false; }, 200);
 }
 
-function gameLoop() {
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
+function defendP1() {
+  p1.isDefending = true;
+  setTimeout(() => { p1.isDefending = false; }, 1000);
 }
 
-gameLoop();
+function specialP1() {
+  if (!p1.fireball) {
+    p1.fireball = { x: p1.x + p1.w, y: p1.y + 30 };
+  }
+}
+
+function updateHP() {
+  document.getElementById('hp-p2').style.width = p2.hp + '%';
+}
+
+draw();
 </script>
 </body>
 </html>
