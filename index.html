@@ -25,7 +25,6 @@
       max-width: 500px;
     }
     canvas {
-      background-color: #2b2b3d;
       border: 3px solid #ffffff;
       border-radius: 6px;
       display: block;
@@ -125,7 +124,7 @@ imgP1.src = 'parrillero.png';
 const imgP2 = new Image();
 imgP2.src = 'robot.png';
 
-// Jugadores (Grandes, a ~1 cm del recuadro)
+// Jugadores
 const p1 = {
   x: 20,
   y: 35,
@@ -163,16 +162,67 @@ function createSparks(x, y) {
   }
 }
 
+// Dibuja el escenario de Restaurante Rural
+function drawRuralRestaurantBackground() {
+  // Cielo al atardecer rural
+  let skyGradient = ctx.createLinearGradient(0, 0, 0, 200);
+  skyGradient.addColorStop(0, '#1e1b4b');
+  skyGradient.addColorStop(1, '#7c2d12');
+  ctx.fillStyle = skyGradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Montañas del paisaje rural
+  ctx.fillStyle = '#064e3b';
+  ctx.beginPath();
+  ctx.moveTo(0, 160);
+  ctx.lineTo(120, 90);
+  ctx.lineTo(250, 160);
+  ctx.lineTo(380, 100);
+  ctx.lineTo(500, 160);
+  ctx.lineTo(500, 200);
+  ctx.lineTo(0, 200);
+  ctx.fill();
+
+  // Estructura de Madera del Restaurant Rural (Fondo)
+  ctx.fillStyle = '#451a03';
+  ctx.fillRect(40, 60, 420, 138); // Pared principal
+  
+  // Ventanas iluminadas con ambiente cálido
+  ctx.fillStyle = '#fef08a';
+  ctx.fillRect(70, 85, 60, 50);
+  ctx.fillRect(370, 85, 60, 50);
+  
+  // Detalle Ventanas (Marcos)
+  ctx.strokeStyle = '#292524';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(70, 85, 60, 50);
+  ctx.strokeRect(370, 85, 60, 50);
+
+  // Cartel del Restaurant Rural
+  ctx.fillStyle = '#78350f';
+  ctx.fillRect(180, 70, 140, 30);
+  ctx.strokeStyle = '#f59e0b';
+  ctx.strokeRect(180, 70, 140, 30);
+  ctx.fillStyle = '#fef08a';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('RESTAURANT RURAL', 188, 89);
+
+  // Suelo de tablas de madera/tierra
+  ctx.fillStyle = '#78350f';
+  ctx.fillRect(0, 195, canvas.width, 35);
+  ctx.strokeStyle = '#451a03';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, 195);
+  ctx.lineTo(canvas.width, 195);
+  ctx.stroke();
+}
+
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Línea de Suelo
-  ctx.strokeStyle = '#eab308';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(0, 198);
-  ctx.lineTo(canvas.width, 198);
-  ctx.stroke();
+  // Fondo Restaurante Rural
+  drawRuralRestaurantBackground();
 
   // --- DIBUJAR PARRILLERO ---
   if (imgP1.complete && imgP1.naturalWidth !== 0) {
@@ -182,11 +232,10 @@ function draw() {
     ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
   }
 
-  // --- DIBUJAR ROBOT FUTURISTA (IMAGEN ROBOT.PNG) ---
+  // --- DIBUJAR ROBOT FUTURISTA ---
   if (imgP2.complete && imgP2.naturalWidth !== 0) {
     ctx.drawImage(imgP2, p2.x, p2.y, p2.w, p2.h);
   } else {
-    // Cuadro limpio azul oscuro de respaldo si aún no carga la imagen
     ctx.fillStyle = '#475569';
     ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
   }
@@ -205,7 +254,7 @@ function draw() {
     }
   });
 
-  // --- CHISPAS Y FUEGO DE ATAQUE ---
+  // --- CHISPAS Y FUEGO ---
   for (let i = sparks.length - 1; i >= 0; i--) {
     let s = sparks[i];
     ctx.fillStyle = s.color;
@@ -218,7 +267,7 @@ function draw() {
     if (s.life <= 0) sparks.splice(i, 1);
   }
 
-  // --- BOLA DE FUEGO (ESPECIAL) ---
+  // --- BOLA DE FUEGO ---
   if (p1.fireball) {
     ctx.shadowBlur = 12;
     ctx.shadowColor = '#ff4500';
@@ -229,6 +278,12 @@ function draw() {
     ctx.shadowBlur = 0;
 
     p1.fireball.x += 10;
+
+    // IA del Robot: reacciona defensivamente ante la bola de fuego
+    if (p1.fireball.x > p2.x - 120 && p1.fireball.x < p2.x) {
+      p2.isDefending = true;
+      setTimeout(() => { p2.isDefending = false; }, 600);
+    }
 
     if (p1.fireball.x >= p2.x && p1.fireball.x <= p2.x + p2.w) {
       if (!p2.isDefending) {
@@ -245,32 +300,42 @@ function draw() {
   requestAnimationFrame(draw);
 }
 
-// --- IA COMBATE AUTOMÁTICO DEL ROBOT ---
+// --- INTELIGENCIA ARTIFICIAL DEL ROBOT (COMBATE Y DEFENSA AUTOMÁTICA) ---
 setInterval(() => {
   if (p2.hp <= 0 || p1.hp <= 0) return;
 
   const dist = p2.x - (p1.x + p1.w);
   const decision = Math.random();
 
-  if (dist > 25) {
-    p2.x -= 10;
+  // 1. Persecución Inteligente
+  if (dist > 35) {
+    p2.x -= 12; // Avanza rápido hacia el parrillero
   } else if (dist < 5) {
-    p2.x += 10;
+    p2.x += 10; // Mantiene distancia corta
   }
 
-  if (dist < 50 && decision > 0.4) {
+  // 2. Reacción defensiva si el Parrillero ataca de cerca
+  if (p1.isAttacking && dist < 45) {
+    p2.isDefending = true;
+    setTimeout(() => { p2.isDefending = false; }, 500);
+    return;
+  }
+
+  // 3. Ataques automáticos
+  if (dist <= 45 && decision > 0.3) {
     p2.isAttacking = true;
     createSparks(p2.x, p2.y + p2.h / 2);
-    if (!p1.isDefending && dist < 30) {
+    if (!p1.isDefending) {
       p1.hp = Math.max(0, p1.hp - 8);
       updateHUD();
     }
-    setTimeout(() => { p2.isAttacking = false; }, 250);
-  } else if (decision < 0.35) {
+    setTimeout(() => { p2.isAttacking = false; }, 200);
+  } else if (decision < 0.25) {
+    // 4. Defensa aleatoria
     p2.isDefending = true;
-    setTimeout(() => { p2.isDefending = false; }, 800);
+    setTimeout(() => { p2.isDefending = false; }, 600);
   }
-}, 450);
+}, 300); // Frecuencia alta para respuestas rápidas
 
 // Controles Jugador
 function moveP1(dir) {
@@ -290,7 +355,7 @@ function attackP1() {
   createSparks(p1.x + p1.w, p1.y + p1.h / 2);
 
   const dist = p2.x - (p1.x + p1.w);
-  if (dist <= 30 && !p2.isDefending) {
+  if (dist <= 35 && !p2.isDefending) {
     p2.hp = Math.max(0, p2.hp - 10);
     updateHUD();
   }
