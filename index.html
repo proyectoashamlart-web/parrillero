@@ -5,84 +5,149 @@
   <title>Div Brawlers: Cyberpunk Grill</title>
   <style>
     body { background-color: #0d0e15; color: white; font-family: monospace; text-align: center; margin: 0; padding: 10px; }
+    h1 { color: #00f0ff; font-size: 1.1rem; margin: 5px 0; text-shadow: 0 0 8px #00f0ff; }
     #game-container { position: relative; display: inline-block; width: 100%; max-width: 500px; }
     canvas { border: 3px solid #ff007f; border-radius: 6px; display: block; margin: 0 auto; width: 100%; background: #000; }
-    
-    /* Pantalla de Selección */
-    #select-screen { display: block; background: #111827; padding: 20px; border: 2px solid #00f0ff; border-radius: 8px; }
-    .char-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px 0; }
-    .char-card { border: 2px solid #38bdf8; padding: 10px; cursor: pointer; transition: 0.3s; }
-    .char-card:hover { border-color: #ff007f; background: #1e293b; }
-    .char-card img { width: 100%; height: auto; display: block; margin-bottom: 5px; }
-    
-    #btn-restart { display: none; position: absolute; bottom: 20px; right: 20px; padding: 8px 16px; font-family: monospace; background: #0d0e15; color: #00f0ff; border: 1px solid #00f0ff; cursor: pointer; z-index: 20; }
+    .hud { display: flex; justify-content: space-between; padding: 5px 10px; font-weight: bold; font-size: 0.8rem; }
+    .bar-bg { width: 110px; height: 14px; background: #222; border: 1px solid #00f0ff; margin-top: 2px; }
+    .bar-fill { height: 100%; transition: width 0.15s; background: #00ff66; }
+    #hp-p2 { background: #ff0055; }
+    #btn-retry { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px 40px; font-size: 1.5rem; cursor: pointer; background: #0d0e15; color: #00f0ff; border: 3px solid #00f0ff; z-index: 20; border-radius: 10px; }
+    .controls { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+    .row { display: flex; gap: 8px; justify-content: center; width: 100%; }
+    button { padding: 12px 18px; font-weight: bold; border: none; border-radius: 6px; color: white; touch-action: manipulation; cursor: pointer; }
+    .btn-atk { background: #dc2626; }
+    .btn-spc { background: #9333ea; }
   </style>
 </head>
 <body>
 
   <h1>DIV BRAWLERS: CYBERPUNK GRILL</h1>
 
-  <!-- Pantalla de Selección -->
-  <div id="select-screen">
-    <h2>ELIGE TU CONTRINCANTE</h2>
-    <div class="char-grid">
-      <!-- Asegúrate de tener los archivos .png en tu carpeta -->
-      <div class="char-card" onclick="startGame('robot.png', '#00f0ff')">
-        <img src="robot.png" alt="Robot"> 🤖 ROBOT
-      </div>
-      <div class="char-card" onclick="startGame('chef.png', '#ff0055')">
-        <img src="chef.png" alt="Chef"> 🔪 CHEF
-      </div>
-      <div class="char-card" onclick="startGame('ninja.png', '#ffaa00')">
-        <img src="ninja.png" alt="Ninja"> 🥷 NINJA
-      </div>
+  <div id="game-container">
+    <div class="hud">
+      <div>PARRILLERO<div class="bar-bg"><div id="hp-p1" class="bar-fill" style="width:100%"></div></div></div>
+      <div id="round-txt">NIVEL 1 - RONDA 1</div>
+      <div><span id="oponente-name">ROBOT</span><div class="bar-bg"><div id="hp-p2" class="bar-fill" style="width:100%"></div></div></div>
     </div>
+    <canvas id="canvas" width="500" height="230"></canvas>
+    <button id="btn-retry" onclick="location.reload()">REINICIAR 🔄</button>
   </div>
 
-  <div id="game-container" style="display:none;">
-    <div class="hud"><div id="hud-stats">NIVEL 1 - RONDA 1/9</div></div>
-    <canvas id="canvas" width="500" height="230"></canvas>
-    <button id="btn-restart" onclick="location.reload()">VOLVER A JUGAR</button>
+  <div class="controls">
+    <div class="row">
+      <button class="btn-atk" onclick="attackP1()">🔥 ATACAR</button>
+      <button class="btn-spc" onclick="specialP1()">💥 ESPECIAL</button>
+    </div>
   </div>
 
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-let round = 1, gameOver = false, selectedOponenteImg, oponenteColor;
 
-// Imágenes de personajes
-const p1Img = new Image(); p1Img.src = 'parrillero.png';
-const oponenteImg = new Image();
+const CHARS = [
+  {name: 'ROBOT', img: 'robot.png', color: '#00f0ff'},
+  {name: 'CHEF ANDROID', img: 'chef.png', color: '#ff0055'},
+  {name: 'NINJA BARBACOA', img: 'ninja.png', color: '#ffaa00'}
+];
 
-function startGame(imgSrc, color) {
-  selectedOponenteImg = imgSrc;
-  oponenteColor = color;
-  oponenteImg.src = imgSrc;
+let round = 1, gameOver = false, oponenteActual;
+let p1 = {x: 50, y: 80, img: new Image(), isAttacking: false, fireball: null, hp: 100};
+let p2 = {x: 350, y: 80, img: new Image(), isAttacking: false, hp: 100};
+p1.img.src = 'parrillero.png';
+
+function setOponente() {
+  // Lógica: 1-3 Robot, 4-6 Chef/Ninja, 7-9 Cualquiera
+  let index;
+  if (round <= 3) index = 0;
+  else if (round <= 6) index = Math.floor(Math.random() * 2) + 1;
+  else index = Math.floor(Math.random() * 3);
   
-  document.getElementById('select-screen').style.display = 'none';
-  document.getElementById('game-container').style.display = 'inline-block';
-  gameLoop();
+  oponenteActual = CHARS[index];
+  p2.img.src = oponenteActual.img;
+  document.getElementById('oponente-name').innerText = oponenteActual.name;
+  document.getElementById('round-txt').innerText = "NIVEL " + Math.ceil(round/3) + " - RONDA " + round;
+  p1.hp = 100; p2.hp = 100;
+  updateHUD();
 }
 
-function drawSlash(x, y, color, isP1) {
-  ctx.shadowBlur = 40; ctx.shadowColor = color;
+function updateHUD() {
+  document.getElementById('hp-p1').style.width = p1.hp + '%';
+  document.getElementById('hp-p2').style.width = p2.hp + '%';
+}
+
+function drawEnergyBall(f) {
+  ctx.fillStyle = oponenteActual.color;
+  ctx.beginPath(); ctx.arc(f.x, f.y, 15, 0, Math.PI*2); ctx.fill();
+}
+
+function drawLaserSlash(p) {
   ctx.strokeStyle = '#fff'; ctx.lineWidth = 10;
+  ctx.shadowBlur = 30; ctx.shadowColor = (p === p1) ? '#00f0ff' : oponenteActual.color;
   ctx.beginPath();
-  ctx.arc(isP1 ? x + 40 : x, y + 30, 80, -Math.PI/3, Math.PI/3);
+  ctx.arc(p.x + (p === p1 ? 80 : 0), p.y + 60, 100, -Math.PI/4, Math.PI/4);
   ctx.stroke();
   ctx.shadowBlur = 0;
 }
 
-function gameLoop() {
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0,0, canvas.width, canvas.height);
-
-  // Dibujar personajes usando imágenes en lugar de bloques
-  ctx.drawImage(p1Img, 50, 150, 60, 80);
-  ctx.drawImage(oponenteImg, 400, 150, 60, 80);
-
-  if(!gameOver && round <= 9) requestAnimationFrame(gameLoop);
+function attackP1() {
+  if (gameOver) return;
+  p1.isAttacking = true;
+  p2.hp = Math.max(0, p2.hp - 10);
+  updateHUD();
+  setTimeout(() => p1.isAttacking = false, 300);
+  checkWin();
 }
+
+function specialP1() {
+  if (gameOver || p1.fireball) return;
+  p1.fireball = { x: p1.x + 80, y: p1.y + 50 };
+}
+
+function checkWin() {
+  if (p2.hp <= 0) {
+    if (round < 9) {
+      round++;
+      setOponente();
+    } else {
+      finishGame();
+    }
+  }
+}
+
+function finishGame() {
+  gameOver = true;
+  ctx.fillStyle = "rgba(0,0,0,0.8)";
+  ctx.fillRect(0,0, canvas.width, canvas.height);
+  ctx.fillStyle = "yellow";
+  ctx.font = "bold 25px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("¡CAMPEÓN DEFINIDO!", 250, 115);
+  document.getElementById('btn-retry').style.display = 'block';
+}
+
+function gameLoop() {
+  if (gameOver) return; // Pantalla estática
+  
+  ctx.fillStyle = "#000"; ctx.fillRect(0,0, canvas.width, canvas.height);
+  ctx.drawImage(p1.img, p1.x, p1.y, 100, 120);
+  ctx.drawImage(p2.img, p2.x, p2.y, 100, 120);
+  
+  if (p1.fireball) { 
+    drawEnergyBall(p1.fireball); 
+    p1.fireball.x += 8; 
+    if(p1.fireball.x > 500) p1.fireball = null; 
+    // Colisión simple de especial
+    if(p1.fireball.x >= p2.x) { p2.hp = Math.max(0, p2.hp - 20); p1.fireball = null; updateHUD(); checkWin(); }
+  }
+  
+  if (p1.isAttacking) drawLaserSlash(p1);
+  
+  requestAnimationFrame(gameLoop);
+}
+
+setOponente();
+gameLoop();
 </script>
 </body>
 </html>
