@@ -7,27 +7,36 @@
     body { background-color: #0d0e15; color: white; font-family: monospace; text-align: center; margin: 0; padding: 10px; }
     #game-container { position: relative; display: inline-block; width: 100%; max-width: 500px; }
     canvas { border: 3px solid #ff007f; border-radius: 6px; display: block; margin: 0 auto; width: 100%; background: #000; }
-    .hud { display: flex; justify-content: space-between; padding: 5px; font-size: 0.8rem; font-weight: bold; color: #00f0ff; }
-    #select-screen { background: #111827; padding: 20px; border: 2px solid #00f0ff; border-radius: 8px; }
-    .char-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 15px 0; }
-    .char-card { background: #1e293b; border: 2px solid #38bdf8; padding: 10px; color: white; font-size: 0.7rem; }
-    #btn-restart { display: none; position: absolute; bottom: 20px; right: 20px; padding: 8px 16px; font-family: monospace; font-weight: bold; background: #0d0e15; color: #00f0ff; border: 1px solid #00f0ff; cursor: pointer; z-index: 20; }
-    #btn-restart:hover { background: #00f0ff; color: #0d0e15; }
+    
+    /* Pantalla de Selección */
+    #select-screen { display: block; background: #111827; padding: 20px; border: 2px solid #00f0ff; border-radius: 8px; }
+    .char-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px 0; }
+    .char-card { border: 2px solid #38bdf8; padding: 10px; cursor: pointer; transition: 0.3s; }
+    .char-card:hover { border-color: #ff007f; background: #1e293b; }
+    .char-card img { width: 100%; height: auto; display: block; margin-bottom: 5px; }
+    
+    #btn-restart { display: none; position: absolute; bottom: 20px; right: 20px; padding: 8px 16px; font-family: monospace; background: #0d0e15; color: #00f0ff; border: 1px solid #00f0ff; cursor: pointer; z-index: 20; }
   </style>
 </head>
 <body>
 
   <h1>DIV BRAWLERS: CYBERPUNK GRILL</h1>
 
+  <!-- Pantalla de Selección -->
   <div id="select-screen">
-    <h2>TU LUCHADOR: PARRILLERO</h2>
-    <p>TUS POSIBLES CONTRINCANTES:</p>
+    <h2>ELIGE TU CONTRINCANTE</h2>
     <div class="char-grid">
-      <div class="char-card">🤖 ROBOT</div>
-      <div class="char-card">🔪 CHEF ANDROIDE</div>
-      <div class="char-card">🥷 NINJA BARBACOA</div>
+      <!-- Asegúrate de tener los archivos .png en tu carpeta -->
+      <div class="char-card" onclick="startGame('robot.png', '#00f0ff')">
+        <img src="robot.png" alt="Robot"> 🤖 ROBOT
+      </div>
+      <div class="char-card" onclick="startGame('chef.png', '#ff0055')">
+        <img src="chef.png" alt="Chef"> 🔪 CHEF
+      </div>
+      <div class="char-card" onclick="startGame('ninja.png', '#ffaa00')">
+        <img src="ninja.png" alt="Ninja"> 🥷 NINJA
+      </div>
     </div>
-    <button onclick="startGame()" style="padding:15px 30px; font-size:1.2rem; cursor:pointer;">INICIAR COMBATE</button>
   </div>
 
   <div id="game-container" style="display:none;">
@@ -39,81 +48,40 @@
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+let round = 1, gameOver = false, selectedOponenteImg, oponenteColor;
 
-let round = 1, gameOver = false, oponente;
-let p1 = {x:50, y:150, w:40, h:60, hp:100, isDefending:false, isAttacking:false};
-let p2 = {x:400, y:150, w:40, h:60, hp:100, isDefending:false, isAttacking:false};
+// Imágenes de personajes
+const p1Img = new Image(); p1Img.src = 'parrillero.png';
+const oponenteImg = new Image();
 
-const CHARS = [
-  {name: 'ROBOT', color: '#00f0ff'}, 
-  {name: 'CHEF ANDROIDE', color: '#ff0055'}, 
-  {name: 'NINJA', color: '#ffaa00'}
-];
-
-function startGame() {
-  oponente = CHARS[Math.floor(Math.random() * CHARS.length)];
+function startGame(imgSrc, color) {
+  selectedOponenteImg = imgSrc;
+  oponenteColor = color;
+  oponenteImg.src = imgSrc;
+  
   document.getElementById('select-screen').style.display = 'none';
   document.getElementById('game-container').style.display = 'inline-block';
   gameLoop();
 }
 
-// Efecto: Corte Cinético (Slash Neón)
-function drawSlash(p, color) {
+function drawSlash(x, y, color, isP1) {
   ctx.shadowBlur = 40; ctx.shadowColor = color;
   ctx.strokeStyle = '#fff'; ctx.lineWidth = 10;
   ctx.beginPath();
-  let startX = p.x + (p === p1 ? p.w : 0);
-  ctx.arc(startX, p.y + p.h/2, 80, -Math.PI/3, Math.PI/3);
+  ctx.arc(isP1 ? x + 40 : x, y + 30, 80, -Math.PI/3, Math.PI/3);
   ctx.stroke();
   ctx.shadowBlur = 0;
 }
 
-// Lógica IA
-function updateAI() {
-  let dist = Math.abs(p2.x - p1.x);
-  if (p1.isAttacking && dist < 100 && Math.random() < 0.4) {
-    p2.isDefending = true;
-    setTimeout(() => p2.isDefending = false, 500);
-  } else if (dist > 100) p2.x -= 2;
-  else if (dist < 60 && Math.random() < 0.05) {
-    p2.isAttacking = true;
-    setTimeout(() => p2.isAttacking = false, 300);
-  }
-}
-
 function gameLoop() {
-  // Fondos según nivel
-  let level = Math.ceil(round / 3);
-  ctx.fillStyle = (level === 1) ? "#0f172a" : (level === 2) ? "#450a0a" : "#2e1065";
+  ctx.fillStyle = "#000";
   ctx.fillRect(0,0, canvas.width, canvas.height);
 
-  updateAI();
-
-  // Dibujar personajes
-  ctx.fillStyle = "white";
-  ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
-  ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
-
-  // Efectos visuales de defensa (Aura amarilla)
-  if(p1.isDefending) { ctx.shadowBlur=25; ctx.shadowColor='#ffff00'; ctx.strokeRect(p1.x-5, p1.y-5, p1.w+10, p1.h+10); ctx.shadowBlur=0; }
-  if(p2.isDefending) { ctx.shadowBlur=25; ctx.shadowColor='#ffff00'; ctx.strokeRect(p2.x-5, p2.y-5, p2.w+10, p2.h+10); ctx.shadowBlur=0; }
-  
-  // Efectos de ataque (Corte cinético)
-  if(p1.isAttacking) drawSlash(p1, '#00f0ff');
-  if(p2.isAttacking) drawSlash(p2, oponente.color);
+  // Dibujar personajes usando imágenes en lugar de bloques
+  ctx.drawImage(p1Img, 50, 150, 60, 80);
+  ctx.drawImage(oponenteImg, 400, 150, 60, 80);
 
   if(!gameOver && round <= 9) requestAnimationFrame(gameLoop);
-  else if (round > 9) finishGame();
-}
-
-function finishGame() {
-  gameOver = true;
-  ctx.fillStyle = "rgba(0,0,0,0.8)";
-  ctx.fillRect(0,0, canvas.width, canvas.height);
-  ctx.fillStyle = "yellow";
-  ctx.font = "bold 20px monospace";
-  ctx.fillText("¡CAMPEÓN DEFINIDO!", 130, 110);
-  document.getElementById('btn-restart').style.display = 'block';
 }
 </script>
 </body>
