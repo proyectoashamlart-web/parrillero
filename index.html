@@ -3,23 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Div Brawlers: Cyberpunk Grill</title>
+  <title>Div Brawlers: Parrillero vs Robot</title>
   <style>
-    body { background-color: #0d0e15; color: white; font-family: monospace, sans-serif; text-align: center; margin: 0; padding: 10px; }
-    h1 { color: #00f0ff; font-size: 1.1rem; margin: 5px 0; text-shadow: 0 0 8px #00f0ff; }
-    #game-container { position: relative; display: inline-block; width: 100%; max-width: 500px; }
-    canvas { border: 3px solid #ff007f; border-radius: 6px; display: block; margin: 0 auto; width: 100%; height: auto; box-shadow: 0 0 15px rgba(255, 0, 127, 0.4); }
-    .hud { display: flex; justify-content: space-between; align-items: center; padding: 5px 10px; font-weight: bold; font-size: 0.8rem; }
-    .bar-bg { width: 110px; height: 14px; background: #222; border: 1px solid #00f0ff; margin-top: 2px; }
-    .bar-fill { height: 100%; transition: width 0.15s; }
+    body {
+      background-color: #0d0e15;
+      color: white;
+      font-family: monospace, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 10px;
+    }
+    h1 {
+      color: #00f0ff;
+      font-size: 1.1rem;
+      margin: 5px 0;
+      text-shadow: 0 0 8px #00f0ff;
+    }
+    #game-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      max-width: 500px;
+    }
+    canvas {
+      border: 3px solid #ff007f;
+      border-radius: 6px;
+      display: block;
+      margin: 0 auto;
+      width: 100%;
+      height: auto;
+      box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
+    }
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 10px;
+      font-weight: bold;
+      font-size: 0.8rem;
+    }
+    .bar-bg {
+      width: 110px;
+      height: 14px;
+      background: #222;
+      border: 1px solid #00f0ff;
+    }
+    .bar-fill {
+      height: 100%;
+      transition: width 0.15s;
+    }
     #hp-p1 { background: #00ff66; width: 100%; }
     #hp-p2 { background: #ff0055; width: 100%; }
-    #round-txt { color: #ffe600; text-shadow: 0 0 5px #ffe600; font-size: 0.9rem; }
-    .score-txt { color: #00f0ff; font-size: 0.75rem; margin-top: 3px; }
-    #btn-retry { display: none; position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); padding: 12px 24px; font-weight: bold; color: #fff; background: linear-gradient(135deg, #ff007f, #7928ca); border: 2px solid #00f0ff; border-radius: 30px; cursor: pointer; z-index: 10; }
-    .controls { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
-    .row { display: flex; gap: 8px; justify-content: center; width: 100%; }
-    button { padding: 12px 18px; font-weight: bold; border: none; border-radius: 6px; color: white; cursor: pointer; }
+    #round-txt { color: #ffe600; text-shadow: 0 0 5px #ffe600; }
+
+    #btn-retry {
+      display: none;
+      position: absolute;
+      top: 65%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(135deg, #ff007f, #7928ca);
+      border: 2px solid #00f0ff;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 0 15px #ff007f;
+      z-index: 10;
+      touch-action: manipulation;
+    }
+    #btn-retry:active {
+      transform: translate(-50%, -50%) scale(0.95);
+    }
+
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      width: 100%;
+    }
+    button {
+      padding: 12px 18px;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 0.9rem;
+      touch-action: manipulation;
+    }
     .btn-move { background: #1e293b; width: 60px; border: 1px solid #38bdf8; }
     .btn-jump { background: #334155; width: 100px; border: 1px solid #38bdf8; }
     .btn-def  { background: #eab308; color: #000; }
@@ -29,13 +108,19 @@
 </head>
 <body>
 
-  <h1>DIV BRAWLERS: CYBERPUNK GRILL</h1>
+  <h1>DIV BRAWLERS: PARRILLERO VS ROBOT 🍖🤖</h1>
 
   <div id="game-container">
     <div class="hud">
-      <div><span>PARRILLERO</span><div class="bar-bg"><div id="hp-p1" class="bar-fill"></div></div><div id="score-p1" class="score-txt">PTS: 0</div></div>
-      <div id="round-txt">RONDA 1 / 9</div>
-      <div><span id="oponente-name">ROBOT</span><div class="bar-bg"><div id="hp-p2" class="bar-fill"></div></div><div id="score-p2" class="score-txt">PTS: 0</div></div>
+      <div>
+        <span>EL PARRILLERO</span>
+        <div class="bar-bg"><div id="hp-p1" class="bar-fill"></div></div>
+      </div>
+      <div id="round-txt">RONDA 1 / 3</div>
+      <div>
+        <span>ROBOT FUTURISTA</span>
+        <div class="bar-bg"><div id="hp-p2" class="bar-fill"></div></div>
+      </div>
     </div>
     <canvas id="canvas" width="500" height="230"></canvas>
     <button id="btn-retry" onclick="restartFullGame()">REINTENTAR 🔄</button>
@@ -58,53 +143,369 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-const CHARS = [
-  {name: 'ROBOT', img: 'robot.png', w: 120, h: 160},
-  {name: 'CHEF ANDROID', img: 'chef.png', w: 100, h: 160},
-  {name: 'NINJA BARBACOA', img: 'ninja.png', w: 120, h: 160}
-];
-
+// Personajes por código si no hay imágenes
 const imgP1 = new Image(); imgP1.src = 'parrillero.png';
-const imgP2 = new Image();
+const imgP2 = new Image(); imgP2.src = 'robot.png';
 
-let currentRound = 1, p1Score = 0, p2Score = 0, roundOver = false, gameOver = false;
+// Sistema de Rondas y Estado
+let currentRound = 1;
+let p1Wins = 0;
+let p2Wins = 0;
+let roundOver = false;
+let gameOver = false;
 let announcementMsg = "";
+let bgParticles = [];
 
-// Proporciones fijas para P1 (Cambia w y h si se ve mal)
-const p1 = { x: 20, y: 35, w: 120, h: 160, hp: 100, fireball: null };
-const p2 = { x: 360, y: 35, w: 120, h: 160, hp: 100 };
+// Jugadores
+const p1 = { x: 20, y: 35, w: 120, h: 160, hp: 100, isAttacking: false, isDefending: false, fireball: null };
+const p2 = { x: 360, y: 35, w: 120, h: 160, hp: 100, isAttacking: false, isDefending: false };
+let sparks = [];
 
-function setOponente() {
-  let char = CHARS[Math.floor(Math.random() * CHARS.length)];
-  imgP2.src = char.img;
-  p2.w = char.w;
-  p2.h = char.h;
-  document.getElementById('oponente-name').innerText = char.name;
+function createSparks(x, y) {
+  for (let i = 0; i < 12; i++) {
+    sparks.push({
+      x: x,
+      y: y + (Math.random() * 60 - 30),
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 0.5) * 6,
+      size: Math.random() * 5 + 3,
+      color: Math.random() > 0.5 ? '#ff007f' : '#00f0ff',
+      life: 12
+    });
+  }
+}
+
+// GENERACIÓN DE FONDO PROCEDURAL CYBERPUNK POR RONDA
+function drawCyberBackground() {
+  // Base del cielo
+  let skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  if (currentRound === 1) {
+    skyGrad.addColorStop(0, '#030712');
+    skyGrad.addColorStop(1, '#1e1b4b');
+  } else if (currentRound === 2) {
+    skyGrad.addColorStop(0, '#111827');
+    skyGrad.addColorStop(1, '#450a0a');
+  } else {
+    skyGrad.addColorStop(0, '#0f172a');
+    skyGrad.addColorStop(1, '#3b0764');
+  }
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Edificios Futuristas Neón de Fondo
+  ctx.fillStyle = '#090d16';
+  for (let i = 0; i < canvas.width; i += 40) {
+    let h = 80 + Math.sin(i + currentRound) * 40;
+    ctx.fillRect(i, canvas.height - 35 - h, 35, h);
+  }
+
+  // Grilla de Suelo Cyberpunk
+  ctx.strokeStyle = currentRound === 2 ? '#ff4500' : '#00f0ff';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= canvas.width; x += 25) {
+    ctx.beginPath();
+    ctx.moveTo(x, 195);
+    ctx.lineTo(x + (x - canvas.width / 2) * 0.5, canvas.height);
+    ctx.stroke();
+  }
+
+  // Línea de Horizonte Brillante
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = currentRound === 2 ? '#ff0055' : '#00f0ff';
+  ctx.strokeStyle = ctx.shadowColor;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, 195);
+  ctx.lineTo(canvas.width, 195);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // DETALLES TEMÁTICOS POR RONDA
+  if (currentRound === 1) {
+    // RONDA 1: Fila de clientes esperando
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText("🍢 CYBER BARBACOA - ESPERA: 15 MIN", 20, 30);
+
+    // Siluetas de clientes en fila
+    ctx.fillStyle = '#051329';
+    for (let i = 0; i < 4; i++) {
+      let cx = 30 + (i * 22);
+      ctx.fillRect(cx, 150, 12, 45); // cuerpo
+      ctx.beginPath(); ctx.arc(cx + 6, 144, 6, 0, Math.PI * 2); ctx.fill(); // cabeza
+    }
+  } else if (currentRound === 2) {
+    // RONDA 2: Parrillas y Cocina con humo
+    ctx.fillStyle = '#ff4500';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText("🔥 PARRILLAS EN ACCIÓN - COCINANDO", 20, 30);
+
+    // Puesto de parrilla de fondo
+    ctx.fillStyle = '#1f2937';
+    ctx.fillRect(180, 130, 140, 65);
+    ctx.fillStyle = '#ff5500';
+    ctx.fillRect(190, 145, 120, 6); // brasas
+
+    // Humo / Vapour
+    if (Math.random() > 0.3) {
+      bgParticles.push({
+        x: 200 + Math.random() * 100, y: 140,
+        vx: (Math.random() - 0.5) * 1, vy: -Math.random() * 2 - 1,
+        size: Math.random() * 8 + 4, alpha: 0.6
+      });
+    }
+  } else {
+    // RONDA 3: Restaurante lleno y comida servida
+    ctx.fillStyle = '#ffe600';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText("🥩 BANQUETE SERVIDO - BUEN PROVECHO", 20, 30);
+
+    // Mesas y Platos
+    for (let i = 0; i < 3; i++) {
+      let mx = 60 + (i * 150);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(mx, 165, 50, 30); // mesa
+      ctx.fillStyle = '#ff0055';
+      ctx.fillRect(mx + 15, 160, 20, 5); // plato con carne
+    }
+  }
+
+  // Dibujar y mover partículas de humo
+  for (let i = bgParticles.length - 1; i >= 0; i--) {
+    let p = bgParticles[i];
+    ctx.fillStyle = `rgba(200, 200, 200, ${p.alpha})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    p.x += p.vx;
+    p.y += p.vy;
+    p.alpha -= 0.015;
+    if (p.alpha <= 0) bgParticles.splice(i, 1);
+  }
 }
 
 function draw() {
-  ctx.clearRect(0,0,500,230);
-  // Fondo procedural (Capa 1)
-  let level = Math.ceil(currentRound / 3);
-  ctx.fillStyle = level === 1 ? '#030712' : level === 2 ? '#111827' : '#0f172a';
-  ctx.fillRect(0,0,500,230);
-  
-  // Dibujado con proporciones individuales
-  ctx.drawImage(imgP1, p1.x, p1.y, p1.w, p1.h);
-  ctx.drawImage(imgP2, p2.x, p2.y, p2.w, p2.h);
-  
-  if(p1.fireball) {
-    ctx.fillStyle = '#ff3300'; ctx.beginPath(); ctx.arc(p1.fireball.x, p1.fireball.y, 14, 0, Math.PI*2); ctx.fill();
-    p1.fireball.x += 10;
-    if(p1.fireball.x >= p2.x) { p2.hp -= 20; p1.fireball = null; updateHUD(); checkRoundEnd(); }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawCyberBackground();
+
+  // DIBUJAR PARRILLERO
+  if (imgP1.complete && imgP1.naturalWidth !== 0) {
+    ctx.drawImage(imgP1, p1.x, p1.y, p1.w, p1.h);
+  } else {
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
   }
 
-  if(roundOver) {
-    ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,0,500,230);
-    ctx.fillStyle = '#00f0ff'; ctx.font = '20px monospace'; ctx.textAlign = 'center';
-    ctx.fillText(announcementMsg, 250, 115);
+  // DIBUJAR ROBOT
+  if (imgP2.complete && imgP2.naturalWidth !== 0) {
+    ctx.drawImage(imgP2, p2.x, p2.y, p2.w, p2.h);
+  } else {
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
   }
+
+  // AROS DE LUZ
+  [p1, p2].forEach(p => {
+    if (p.isDefending) {
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = '#ffe600';
+      ctx.strokeStyle = '#ffee00';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.ellipse(p.x + p.w / 2, p.y + p.h / 2, p.w / 1.4, p.h / 1.4, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+  });
+
+  // CHISPAS
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    let s = sparks[i];
+    ctx.fillStyle = s.color;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    ctx.fill();
+    s.x += s.vx;
+    s.y += s.vy;
+    s.life--;
+    if (s.life <= 0) sparks.splice(i, 1);
+  }
+
+  // BOLA DE FUEGO
+  if (p1.fireball && !roundOver) {
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#ff4500';
+    ctx.fillStyle = '#ff3300';
+    ctx.beginPath();
+    ctx.arc(p1.fireball.x, p1.fireball.y, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    p1.fireball.x += 10;
+
+    if (p1.fireball.x > p2.x - 120 && p1.fireball.x < p2.x) {
+      p2.isDefending = true;
+      setTimeout(() => { p2.isDefending = false; }, 300);
+    }
+
+    if (p1.fireball.x >= p2.x && p1.fireball.x <= p2.x + p2.w) {
+      if (!p2.isDefending) {
+        p2.hp = Math.max(0, p2.hp - 20);
+        updateHUD();
+        checkRoundEnd();
+      }
+      createSparks(p2.x, p2.y + p2.h / 2);
+      p1.fireball = null;
+    } else if (p1.fireball.x > canvas.width) {
+      p1.fireball = null;
+    }
+  }
+
+  // Cartel de Anuncio
+  if (roundOver) {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = 'bold 18px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(announcementMsg, canvas.width / 2, gameOver ? 85 : canvas.height / 2);
+    ctx.textAlign = 'start';
+  }
+
   requestAnimationFrame(draw);
+}
+
+// INTELIGENCIA DEL ROBOT
+function robotCounterAttack() {
+  if (roundOver || p2.hp <= 0) return;
+  p2.isAttacking = true;
+  createSparks(p2.x, p2.y + p2.h / 2);
+
+  const dist = p2.x - (p1.x + p1.w);
+  if (!p1.isDefending && dist < 45) {
+    p1.hp = Math.max(0, p1.hp - 10);
+    updateHUD();
+    checkRoundEnd();
+  }
+  setTimeout(() => { p2.isAttacking = false; }, 200);
+}
+
+setInterval(() => {
+  if (roundOver || p2.hp <= 0 || p1.hp <= 0) return;
+
+  const dist = p2.x - (p1.x + p1.w);
+  const decision = Math.random();
+
+  if (dist > 30) {
+    p2.x -= 12;
+  } else if (dist < 5) {
+    p2.x += 8;
+  }
+
+  if (dist <= 45 && decision > 0.35) {
+    robotCounterAttack();
+  } else if (decision < 0.3) {
+    p2.isDefending = true;
+    setTimeout(() => { p2.isDefending = false; }, 400);
+  }
+}, 380);
+
+function checkRoundEnd() {
+  if (roundOver) return;
+
+  if (p1.hp <= 0 || p2.hp <= 0) {
+    roundOver = true;
+
+    if (p1.hp > 0) {
+      p1Wins++;
+      announcementMsg = `¡PARRILLERO GANA LA RONDA ${currentRound}!`;
+    } else {
+      p2Wins++;
+      announcementMsg = `¡ROBOT GANA LA RONDA ${currentRound}!`;
+    }
+
+    setTimeout(() => {
+      if (currentRound < 3) {
+        currentRound++;
+        resetRound();
+      } else {
+        gameOver = true;
+        const winner = p1Wins > p2Wins ? '¡PARRILLERO ES EL CAMPEÓN!' : '¡ROBOT ES EL CAMPEÓN!';
+        announcementMsg = winner;
+        document.getElementById('btn-retry').style.display = 'block';
+      }
+    }, 800);
+  }
+}
+
+function resetRound() {
+  p1.hp = 100;
+  p2.hp = 100;
+  p1.x = 20;
+  p2.x = 360;
+  p1.fireball = null;
+  roundOver = false;
+  document.getElementById('round-txt').innerText = `RONDA ${currentRound} / 3`;
+  updateHUD();
+}
+
+// REINICIAR TODO EL JUEGO COMPLETO
+function restartFullGame() {
+  currentRound = 1;
+  p1Wins = 0;
+  p2Wins = 0;
+  gameOver = false;
+  bgParticles = [];
+  sparks = [];
+  document.getElementById('btn-retry').style.display = 'none';
+  resetRound();
+}
+
+// CONTROLES JUGADOR
+function moveP1(dir) {
+  if (roundOver) return;
+  p1.x = Math.max(0, Math.min(p2.x - p1.w + 10, p1.x + dir));
+}
+
+function jumpP1() {
+  if (roundOver) return;
+  if (p1.y === 35) {
+    p1.y = -5;
+    setTimeout(() => { p1.y = 35; }, 350);
+  }
+}
+
+function attackP1() {
+  if (roundOver) return;
+  p1.isAttacking = true;
+  p1.isDefending = false;
+  createSparks(p1.x + p1.w, p1.y + p1.h / 2);
+
+  const dist = p2.x - (p1.x + p1.w);
+  if (dist <= 35) {
+    if (!p2.isDefending) {
+      p2.hp = Math.max(0, p2.hp - 15);
+      updateHUD();
+      checkRoundEnd();
+    }
+    setTimeout(robotCounterAttack, 120);
+  }
+
+  setTimeout(() => { p1.isAttacking = false; }, 250);
+}
+
+function defendP1() {
+  if (roundOver) return;
+  p1.isDefending = true;
+  setTimeout(() => { p1.isDefending = false; }, 800);
+}
+
+function specialP1() {
+  if (roundOver) return;
+  if (!p1.fireball) {
+    p1.fireball = { x: p1.x + p1.w, y: p1.y + p1.h / 2 };
+  }
 }
 
 function updateHUD() {
@@ -112,30 +513,6 @@ function updateHUD() {
   document.getElementById('hp-p2').style.width = p2.hp + '%';
 }
 
-function checkRoundEnd() {
-  if(p1.hp <= 0 || p2.hp <= 0) {
-    roundOver = true;
-    announcementMsg = p1.hp > 0 ? `RONDA ${currentRound} GANADA!` : `RONDA ${currentRound} PERDIDA!`;
-    setTimeout(() => {
-      if(currentRound < 9) { currentRound++; resetRound(); }
-      else { gameOver = true; announcementMsg = "¡JUEGO TERMINADO!"; document.getElementById('btn-retry').style.display = 'block'; }
-    }, 1500);
-  }
-}
-
-function resetRound() {
-  p1.hp=100; p2.hp=100; p1.x=20; p2.x=360; roundOver=false;
-  document.getElementById('round-txt').innerText = `RONDA ${currentRound} / 9`;
-  setOponente(); updateHUD();
-}
-
-function moveP1(d) { p1.x += d; }
-function jumpP1() { p1.y = -5; setTimeout(() => p1.y = 35, 350); }
-function attackP1() { p2.hp -= 10; updateHUD(); checkRoundEnd(); }
-function specialP1() { if(!p1.fireball) p1.fireball = {x: p1.x+50, y: p1.y+50}; }
-function restartFullGame() { location.reload(); }
-
-setOponente();
 draw();
 </script>
 </body>
