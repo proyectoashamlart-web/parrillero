@@ -11,8 +11,9 @@
     canvas { border: 3px solid #ff007f; border-radius: 6px; display: block; margin: 0 auto; width: 100%; height: auto; box-shadow: 0 0 15px rgba(255, 0, 127, 0.4); }
     .hud { display: flex; justify-content: space-between; align-items: center; padding: 5px 10px; font-weight: bold; font-size: 0.8rem; }
     .bar-bg { width: 110px; height: 14px; background: #222; border: 1px solid #00f0ff; margin-top: 2px; }
-    .bar-fill { height: 100%; transition: width 0.15s; background: #00ff66; }
-    #hp-p2 { background: #ff0055; }
+    .bar-fill { height: 100%; transition: width 0.15s; }
+    #hp-p1 { background: #00ff66; width: 100%; }
+    #hp-p2 { background: #ff0055; width: 100%; }
     #round-txt { color: #ffe600; text-shadow: 0 0 5px #ffe600; font-size: 0.9rem; }
     .score-txt { color: #00f0ff; font-size: 0.75rem; margin-top: 3px; }
     #btn-retry { display: none; position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); padding: 12px 24px; font-weight: bold; color: #fff; background: linear-gradient(135deg, #ff007f, #7928ca); border: 2px solid #00f0ff; border-radius: 30px; cursor: pointer; z-index: 10; }
@@ -58,83 +59,80 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 const CHARS = [
-  {name: 'ROBOT', img: 'robot.png'},
-  {name: 'CHEF ANDROID', img: 'chef.png'},
-  {name: 'NINJA BARBACOA', img: 'ninja.png'}
+  {name: 'ROBOT', img: 'robot.png', w: 120, h: 160},
+  {name: 'CHEF ANDROID', img: 'chef.png', w: 100, h: 160},
+  {name: 'NINJA BARBACOA', img: 'ninja.png', w: 120, h: 160}
 ];
 
-let currentRound = 1;
-let p1Score = 0, p2Score = 0, roundOver = false, gameOver = false;
-let announcementMsg = "", announcementSubMsg = "";
-const p1 = { x: 20, y: 35, w: 120, h: 160, hp: 100, isAttacking: false, isDefending: false, fireball: null, img: new Image() };
-const p2 = { x: 360, y: 35, w: 120, h: 160, hp: 100, isAttacking: false, isDefending: false, img: new Image() };
-p1.img.src = 'parrillero.png';
+const imgP1 = new Image(); imgP1.src = 'parrillero.png';
+const imgP2 = new Image();
+
+let currentRound = 1, p1Score = 0, p2Score = 0, roundOver = false, gameOver = false;
+let announcementMsg = "";
+
+// Proporciones fijas para P1 (Cambia w y h si se ve mal)
+const p1 = { x: 20, y: 35, w: 120, h: 160, hp: 100, fireball: null };
+const p2 = { x: 360, y: 35, w: 120, h: 160, hp: 100 };
 
 function setOponente() {
-  let index = Math.floor(Math.random() * CHARS.length);
-  p2.img.src = CHARS[index].img;
-  document.getElementById('oponente-name').innerText = CHARS[index].name;
+  let char = CHARS[Math.floor(Math.random() * CHARS.length)];
+  imgP2.src = char.img;
+  p2.w = char.w;
+  p2.h = char.h;
+  document.getElementById('oponente-name').innerText = char.name;
 }
 
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // Fondo: Cambia cada 3 rondas (Nivel)
+  ctx.clearRect(0,0,500,230);
+  // Fondo procedural (Capa 1)
   let level = Math.ceil(currentRound / 3);
   ctx.fillStyle = level === 1 ? '#030712' : level === 2 ? '#111827' : '#0f172a';
-  ctx.fillRect(0,0, canvas.width, canvas.height);
+  ctx.fillRect(0,0,500,230);
   
-  // Dibujar Jugadores
-  ctx.drawImage(p1.img, p1.x, p1.y, p1.w, p1.h);
-  ctx.drawImage(p2.img, p2.x, p2.y, p2.w, p2.h);
+  // Dibujado con proporciones individuales
+  ctx.drawImage(imgP1, p1.x, p1.y, p1.w, p1.h);
+  ctx.drawImage(imgP2, p2.x, p2.y, p2.w, p2.h);
+  
+  if(p1.fireball) {
+    ctx.fillStyle = '#ff3300'; ctx.beginPath(); ctx.arc(p1.fireball.x, p1.fireball.y, 14, 0, Math.PI*2); ctx.fill();
+    p1.fireball.x += 10;
+    if(p1.fireball.x >= p2.x) { p2.hp -= 20; p1.fireball = null; updateHUD(); checkRoundEnd(); }
+  }
 
-  if (roundOver) {
-    ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,0, canvas.width, canvas.height);
-    ctx.fillStyle = '#00f0ff'; ctx.textAlign = 'center';
-    ctx.fillText(announcementMsg, 250, 100);
+  if(roundOver) {
+    ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,0,500,230);
+    ctx.fillStyle = '#00f0ff'; ctx.font = '20px monospace'; ctx.textAlign = 'center';
+    ctx.fillText(announcementMsg, 250, 115);
   }
   requestAnimationFrame(draw);
-}
-
-function checkRoundEnd() {
-  if (p1.hp <= 0 || p2.hp <= 0) {
-    roundOver = true;
-    if (p1.hp > 0) p1Score += p1.hp; else p2Score += p2.hp;
-    announcementMsg = p1.hp > 0 ? `RONDA ${currentRound} GANADA` : `RONDA ${currentRound} PERDIDA`;
-    
-    setTimeout(() => {
-      if (currentRound < 9) {
-        currentRound++;
-        resetRound();
-      } else {
-        gameOver = true;
-        announcementMsg = "¡JUEGO FINALIZADO!";
-        document.getElementById('btn-retry').style.display = 'block';
-      }
-    }, 1500);
-  }
-}
-
-function resetRound() {
-  p1.hp = 100; p2.hp = 100; p1.x = 20; p2.x = 360; roundOver = false;
-  document.getElementById('round-txt').innerText = `RONDA ${currentRound} / 9`;
-  setOponente();
-  updateHUD();
 }
 
 function updateHUD() {
   document.getElementById('hp-p1').style.width = p1.hp + '%';
   document.getElementById('hp-p2').style.width = p2.hp + '%';
-  document.getElementById('score-p1').innerText = `PTS: ${p1Score}`;
-  document.getElementById('score-p2').innerText = `PTS: ${p2Score}`;
 }
 
-// Controles base
+function checkRoundEnd() {
+  if(p1.hp <= 0 || p2.hp <= 0) {
+    roundOver = true;
+    announcementMsg = p1.hp > 0 ? `RONDA ${currentRound} GANADA!` : `RONDA ${currentRound} PERDIDA!`;
+    setTimeout(() => {
+      if(currentRound < 9) { currentRound++; resetRound(); }
+      else { gameOver = true; announcementMsg = "¡JUEGO TERMINADO!"; document.getElementById('btn-retry').style.display = 'block'; }
+    }, 1500);
+  }
+}
+
+function resetRound() {
+  p1.hp=100; p2.hp=100; p1.x=20; p2.x=360; roundOver=false;
+  document.getElementById('round-txt').innerText = `RONDA ${currentRound} / 9`;
+  setOponente(); updateHUD();
+}
+
 function moveP1(d) { p1.x += d; }
 function jumpP1() { p1.y = -5; setTimeout(() => p1.y = 35, 350); }
 function attackP1() { p2.hp -= 10; updateHUD(); checkRoundEnd(); }
-function defendP1() { p1.isDefending = true; setTimeout(() => p1.isDefending = false, 500); }
-function specialP1() { p2.hp -= 20; updateHUD(); checkRoundEnd(); }
-
+function specialP1() { if(!p1.fireball) p1.fireball = {x: p1.x+50, y: p1.y+50}; }
 function restartFullGame() { location.reload(); }
 
 setOponente();
